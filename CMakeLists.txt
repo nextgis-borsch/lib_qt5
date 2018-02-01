@@ -27,6 +27,14 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(qt5)
 
+if(NOT DEFINED PACKAGE_VENDOR)
+    set(PACKAGE_VENDOR NextGIS)
+endif()
+
+if(NOT DEFINED PACKAGE_BUGREPORT)
+    set(PACKAGE_BUGREPORT info@nextgis.com)
+endif()
+
 # some init settings
 set(CMAKE_COLOR_MAKEFILE ON)
 # set path to additional CMake modules
@@ -43,7 +51,7 @@ set(VERSION "${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}.${QT_REV_VERSION}")
 report_version(${PROJECT_NAME} ${VERSION})
 
 set(SUBFOLDER "single/")
-set(CONFIGURE_ARGS -prefix ${CMAKE_INSTALL_PREFIX} -opensource -confirm-license -nomake examples -nomake tests -recheck-all)
+set(CONFIGURE_ARGS -prefix ${CMAKE_INSTALL_PREFIX} -opensource -confirm-license -nomake examples -nomake tests -recheck-all ${QT_CONFIGURE_ARGS})
 
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
@@ -382,25 +390,41 @@ if(OSX_FRAMEWORK)
 endif()
 
 if (REGISTER_PACKAGE)
-    set(INSTALL_INC_DIR ${CMAKE_INSTALL_PREFIX}/include)
-    set(INSTALL_LIB_DIR ${CMAKE_INSTALL_PREFIX}/lib)
-    set(INSTALL_BIN_DIR ${CMAKE_INSTALL_PREFIX}/bin)
+    # Export the package for use from the build-tree
+    # (this registers the build-tree with a global CMake-registry)
 
-    set(EXPORT_PACKAGE_NAME Qt5)
-    string(TOUPPER ${EXPORT_PACKAGE_NAME} EXPORT_PACKAGE_NAME_UPPER)
-    set(EXPORT_PACKAGE_LIB_NAME qt5)
+    set(PACKAGE_NAME Qt5)
+    string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
+    set(PACKAGE_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase)
 
-    export(PACKAGE ${EXPORT_PACKAGE_NAME})
+    export(PACKAGE ${PACKAGE_NAME})
 
     include(CMakePackageConfigHelpers)
     configure_package_config_file(
         ${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_PACKAGE_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
         INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
     write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/${EXPORT_PACKAGE_NAME}ConfigVersion.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}ConfigVersion.cmake
         VERSION ${VERSION}
         COMPATIBILITY AnyNewerVersion )
-# else()
-#    export(TARGETS ${LIB_NAME} FILE ${LIB_NAME}-exports.cmake EXPORT_LINK_INTERFACE_LIBRARIES)
 endif()
+
+# Archiving ====================================================================
+set(PACKAGE_NAME ${PROJECT_NAME})
+
+set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
+set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
+set(CPACK_PACKAGE_VERSION "${VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
+set(CPACK_PACKAGE_RELOCATABLE TRUE)
+set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_MONOLITHIC_INSTALL ON)
+set(CPACK_STRIP_FILES TRUE)
+
+# Get cpack zip archive name
+get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
+
+include (CPack)

@@ -1,13 +1,15 @@
-set(@EXPORT_PACKAGE_NAME_UPPER@_VERSION @VERSION@)
-set(CMAKE_PREFIX_PATH @CMAKE_INSTALL_PREFIX@ CACHE INTERNAL "qt5 prefix dir")
-set(PACKAGE_PREFIX_DIR @CMAKE_INSTALL_PREFIX@ CACHE INTERNAL "qt5 prefix dir")
-set(@EXPORT_PACKAGE_NAME_UPPER@_RUN_IN_MODULE_MODE ON CACHE INTERNAL "qt5 run in module mode")
+# - Config file for the @PACKAGE_UPPER_NAME@ package
+
+set(@PACKAGE_UPPER_NAME@_VERSION "@VERSION@")
+set(CMAKE_PREFIX_PATH @PACKAGE_PREFIX@ CACHE INTERNAL "qt5 prefix dir")
+set(PACKAGE_PREFIX_DIR @PACKAGE_PREFIX@ CACHE INTERNAL "qt5 prefix dir")
+set(@PACKAGE_UPPER_NAME@_RUN_IN_MODULE_MODE ON CACHE INTERNAL "qt5 run in module mode")
 
 set(_qt5_install_prefix ${PACKAGE_PREFIX_DIR}/lib/cmake)
 
 if (NOT Qt5_FIND_COMPONENTS)
     set(Qt5_NOT_FOUND_MESSAGE "The Qt5 package requires at least one component")
-    set(Qt5_FOUND False)
+    set(@PACKAGE_UPPER_NAME@_FOUND FALSE)
     return()
 endif()
 
@@ -30,7 +32,7 @@ foreach(module ${Qt5_FIND_COMPONENTS})
         ${_Qt5_FIND_PARTS_REQUIRED}
         PATHS ${_qt5_module_paths} NO_DEFAULT_PATH
     )
-    if (NOT Qt5${module}_FOUND)
+    if (NOT @PACKAGE_UPPER_NAME@${module}_FOUND)
         string(CONFIGURE ${_qt5_module_location_template} _expected_module_location @ONLY)
 
         if (Qt5_FIND_REQUIRED_${module})
@@ -45,7 +47,7 @@ endforeach()
 
 if (_Qt5_NOTFOUND_MESSAGE)
     set(Qt5_NOT_FOUND_MESSAGE "${_Qt5_NOTFOUND_MESSAGE}")
-    set(Qt5_FOUND False)
+    set(@PACKAGE_UPPER_NAME@_FOUND FALSE)
 else()
-    set(QT5_FOUND True)
+    set(@PACKAGE_UPPER_NAME@_FOUND TRUE)
 endif()
