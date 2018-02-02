@@ -45,6 +45,8 @@ if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
                        and BUILD_STATIC_LIBS keys are permitted")
 endif()
 
+set(PACKAGE_NAME ${PROJECT_NAME})
+
 include(util)
 check_version(QT_MAJOR_VERSION QT_MINOR_VERSION QT_REV_VERSION)
 set(VERSION "${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}.${QT_REV_VERSION}")
@@ -127,63 +129,46 @@ include(FindAnyProject)
 
 find_anyproject(ZLIB DEFAULT ON)
 if(ZLIB_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIR})
-    if(TARGET ${ZLIB_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
+    if(TARGET ${ZLIB_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-zlib)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${ZLIB_LIBRARY} DIRECTORY)
-            get_filename_component(PARENT_DIR ${PARENT_DIR} DIRECTORY)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
+        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        if(WIN32)
-            warning_message("Copy ${LINK_SEARCH_PATH}")
-            execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LINK_SEARCH_PATH} ${PARENT_DIR}/zdll.lib)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR}/zdll.lib)
-        endif()
+        create_symlink(${PARENT_DIR} "zlib")
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBZ_LIBS=\"-lzlib\"")
+
+        # Check if build needed
+        build_if_needed(LINK_SEARCH_PATH "ZLIB" CPU_COUNT)
     endif()
 endif()
 
 find_anyproject(OpenSSL DEFAULT ON)
 if(OPENSSL_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
-    if(TARGET ${OPENSSL_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIRS})
+    if(TARGET ${OPENSSL_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -openssl-linked)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARY} LOCATION)
-            get_filename_component(LINK_SEARCH_PATH ${LINK_SEARCH_PATH} DIRECTORY)
-            get_filename_component(LINK_SEARCH_PATH ${LINK_SEARCH_PATH} DIRECTORY)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
         create_symlink(${PARENT_DIR} "openssl")
-
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-lopenssl\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_INCDIR=${OPENSSL_INCLUDE_DIR}")
+
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "OpenSSL" ${CPU_COUNT})
     endif()
 endif()
 
 find_anyproject(Freetype DEFAULT ON)
 if(FREETYPE_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIR})
-    if(TARGET ${FREETYPE_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
+    if(TARGET ${FREETYPE_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-freetype)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${FREETYPE_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${FREETYPE_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
@@ -191,7 +176,9 @@ if(FREETYPE_FOUND)
         create_symlink(${PARENT_DIR} "freetype")
 
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_LIBS=\"-lfreetype\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_INCDIR=${OPENSSL_INCLUDE_DIR}")
+
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "Freetype" ${CPU_COUNT})
     endif()
 endif()
 
@@ -199,57 +186,50 @@ endif()
 
 find_anyproject(JPEG DEFAULT ON)
 if(JPEG_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${JPEG_INCLUDE_DIR})
-    if(TARGET ${JPEG_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS})
+    if(TARGET ${JPEG_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libjpeg)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${JPEG_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${JPEG_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
         create_symlink(${PARENT_DIR} "jpeg")
 
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_LIBS=\"-ljpeg\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_INCDIR=${OPENSSL_INCLUDE_DIR}")
 
-        if(WIN32)
-            warning_message("Copy ${LINK_SEARCH_PATH}")
-            execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LINK_SEARCH_PATH} ${PARENT_DIR}/libjpeg.lib)
-        endif()
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "JPEG" ${CPU_COUNT})
     endif()
 endif()
 
 find_anyproject(PNG DEFAULT ON)
 if(PNG_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${PNG_INCLUDE_DIR})
-    if(TARGET ${PNG_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS})
+    if(TARGET ${PNG_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libpng)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${PNG_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${PNG_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
         create_symlink(${PARENT_DIR} "png")
 
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_LIBS=\"-lpng\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_INCDIR=${OPENSSL_INCLUDE_DIR}")
+
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "PNG" ${CPU_COUNT})
     endif()
 endif()
 
 # find_anyproject(TIFF DEFAULT ON)
 # if(TIFF_FOUND)
-#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${TIFF_INCLUDE_DIR})
-#     if(TARGET ${TIFF_LIBRARY})
+#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
+#     if(TARGET ${TIFF_LIBRARIES})
 #         if(WIN32)
-#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARY} IMPORTED_IMPLIB_RELEASE)
+#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
 #         else()
-#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARY} LOCATION)
+#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARIES} LOCATION)
 #         endif()
 #         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 #         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -L ${PARENT_DIR})
@@ -265,13 +245,13 @@ endif()
 #
 # find_anyproject(GIF DEFAULT ON)
 # if(GIF_FOUND)
-#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${GIF_INCLUDE_DIR})
-#     if(TARGET ${GIF_LIBRARY})
+#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${GIF_INCLUDE_DIRS})
+#     if(TARGET ${GIF_LIBRARIES})
 #         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-gif)
 #         if(WIN32)
-#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARY} IMPORTED_IMPLIB_RELEASE)
+#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
 #         else()
-#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARY} LOCATION)
+#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARIES} LOCATION)
 #         endif()
 #         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 #         if(OSX_FRAMEWORK)
@@ -282,41 +262,39 @@ endif()
 
 find_anyproject(SQLite3 DEFAULT ON)
 if(SQLITE3_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIR})
-    if(TARGET ${SQLITE3_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS})
+    if(TARGET ${SQLITE3_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-sqlite)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${SQLITE3_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${SQLITE3_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
         create_symlink(${PARENT_DIR} "sqlite3")
 
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_LIBS=\"-lsqlite3\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_INCDIR=${OPENSSL_INCLUDE_DIR}")
+
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "SQLite3" ${CPU_COUNT})
     endif()
 endif()
 
 find_anyproject(PostgreSQL DEFAULT ON)
 if(POSTGRESQL_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${POSTGRESQL_INCLUDE_DIR})
-    if(TARGET ${POSTGRESQL_LIBRARY})
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${POSTGRESQL_INCLUDE_DIRS})
+    if(TARGET ${POSTGRESQL_LIBRARIES})
         # set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -feature-psql)
-        if(WIN32)
-            get_target_property(LINK_SEARCH_PATH ${POSTGRESQL_LIBRARY} IMPORTED_IMPLIB_RELEASE)
-        else()
-            get_target_property(LINK_SEARCH_PATH ${POSTGRESQL_LIBRARY} LOCATION)
-        endif()
+        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+
         set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
         create_symlink(${PARENT_DIR} "pq")
 
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_LIBS=\"-lpq\"")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_INCDIR=${OPENSSL_INCLUDE_DIR}")
+
+        # Check if build needed
+        build_if_needed(${LINK_SEARCH_PATH} "PostgreSQL" ${CPU_COUNT})
     endif()
 endif()
 
@@ -374,7 +352,7 @@ else()
     add_custom_target(build_qt ALL
         COMMAND make -j ${CPU_COUNT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-        COMMENT "make -j ${CPU_COUNT}"
+        COMMENT "${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/make -j ${CPU_COUNT}"
         VERBATIM
     )
     install(CODE "execute_process(
@@ -414,7 +392,6 @@ if (REGISTER_PACKAGE)
 endif()
 
 # Archiving ====================================================================
-set(PACKAGE_NAME ${PROJECT_NAME})
 
 set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
 set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")

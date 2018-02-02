@@ -37,7 +37,9 @@ function(check_version major minor rev)
 
     # Store version string in file for installer needs
     file(TIMESTAMP ${CHECK_FILE} VERSION_DATETIME "%Y-%m-%d %H:%M:%S" UTC)
-    file(WRITE ${CMAKE_BINARY_DIR}/version.str "${MAJOR_VERSION}.${MINOR_VERSION}.${REV_VERSION}\n${VERSION_DATETIME}")
+    set(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${REV_VERSION})
+    get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+    file(WRITE ${CMAKE_BINARY_DIR}/version.str "${VERSION}\n${VERSION_DATETIME}\n${PROJECT_CPACK_FILENAME}")
 
 endfunction(check_version)
 
@@ -73,10 +75,31 @@ function(warning_message text)
 
 endfunction()
 
-macro(create_symlink PATH_TO_LIB LIB_NAME)
+macro(create_symlink PATH_TO_LIB)
     if(OSX_FRAMEWORK)
-        warning_message("Create symlink ${PATH_TO_LIB}/lib${LIB_NAME}.so")
+        get_filename_component(LIB_DIR ${PATH_TO_LIB} DIRECTORY)
+        get_filename_component(LIB_NAME ${PATH_TO_LIB} NAME)
+        warning_message("Create symlink ${LIB_DIR}/lib${LIB_NAME}.so")
         execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${PATH_TO_LIB}/${LIB_NAME} ${PATH_TO_LIB}/lib${LIB_NAME}.so)
+    endif()
+endmacro()
+
+macro(build_if_needed PATH NAME CPU_COUNT)
+    if(NOT EXISTS ${PATH})
+        if(WIN32)
+            set(OPTIONAL_ARGS "--" "/m:${CPU_COUNT}")
+        else()
+            set(OPTIONAL_ARGS "--" "-j${CPU_COUNT}")
+        endif()
+
+        execute_process(COMMAND ${CMAKE_COMMAND} --build . --config release ${OPTIONAL_ARGS}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build
+            RESULT_VARIABLE EXECUTE_RESULT_CODE
+        )
+
+        if(NOT ${EXECUTE_RESULT_CODE} EQUAL 0)
+            message(FATAL_ERROR "Build ${NAME} failed")
+        endif()
     endif()
 endmacro()
 
