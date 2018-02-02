@@ -86,9 +86,7 @@ endmacro()
 
 macro(build_if_needed PATH NAME CPU_COUNT)
     if(NOT EXISTS ${PATH})
-        if(WIN32)
-            set(OPTIONAL_ARGS "--" "/m:${CPU_COUNT}")
-        else()
+        if(UNIX)
             set(OPTIONAL_ARGS "--" "-j${CPU_COUNT}")
         endif()
 
