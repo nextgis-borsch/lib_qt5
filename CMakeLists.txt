@@ -311,7 +311,7 @@ foreach(CONF_LINK_LIB ${CONFIGURE_ARGS_LINK_LIBS})
 endforeach()
 
 if(WIN32)
-    set(CONFIGURE_CMD_NAME configure.exe)
+    set(CONFIGURE_CMD_NAME configure.bat)
 else()
     set(CONFIGURE_CMD_NAME configure)
 endif()
@@ -335,11 +335,7 @@ status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}")
 execute_process(
     COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-    OUTPUT_VARIABLE CONFIG_OUT
-    ERROR_VARIABLE CONFIG_OUT
 )
-
-message("Configured:\n${CONFIG_OUT}")
 
 if(WIN32)
     add_custom_target(build_qt ALL
