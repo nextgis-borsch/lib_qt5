@@ -370,7 +370,7 @@ function(find_extproject name)
     )
 
     if(NOT EXISTS "${EXT_SOURCE_DIR}/.git")
-        color_message("Git clone ${repo_name} ...")
+        color_message("Git clone ${name} ...")
 
         set(error_code 1)
         set(number_of_tries 0)
@@ -388,7 +388,7 @@ function(find_extproject name)
             return()
         endif()
 
-        color_message("Configure ${repo_name} ...")
+        color_message("Configure ${name} ...")
         execute_process(COMMAND ${CMAKE_COMMAND} ${EXT_SOURCE_DIR}
             ${find_extproject_CMAKE_ARGS}
             WORKING_DIRECTORY ${EXT_BINARY_DIR})

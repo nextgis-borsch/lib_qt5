@@ -359,8 +359,10 @@ execute_process(COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE
 )
 
 if(WIN32)
-    add_custom_target(build_qt ALL nmake
+    add_custom_target(build_qt ALL
+        COMMAND nmake /m:${CPU_COUNT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+        COMMENT "nmake /m:${CPU_COUNT}"
         VERBATIM
     )
     install(CODE "execute_process(
@@ -368,10 +370,11 @@ if(WIN32)
         WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
         )"
     )
-
 else()
-    add_custom_target(build_qt ALL make -j ${CPU_COUNT}
+    add_custom_target(build_qt ALL
+        COMMAND make -j ${CPU_COUNT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+        COMMENT "make -j ${CPU_COUNT}"
         VERBATIM
     )
     install(CODE "execute_process(
