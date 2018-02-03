@@ -343,21 +343,28 @@ if(WIN32)
         PATH_SUFFIXES "Common7/Tools" "Tools"
     )
 
-    message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT}")
+    string(FIND ${CMAKE_GENERATOR_PLATFORM} "Win64" POS)
+    if(POS GREATER -1)
+        set(VCVARSALL_BAT_ARG -arch=amd64)
+    else()
+        set(VCVARSALL_BAT_ARG -arch=x86)
+    endif()
+
+    message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
 
     execute_process(
-        COMMAND ${VCVARSALL_BAT} -arch=x86 && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
+        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
 
     add_custom_target(build_qt ALL
-        COMMAND ${VCVARSALL_BAT} -arch=x86 && nmake
+        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-        COMMENT "${VCVARSALL_BAT} -arch=x86 && nmake"
+        COMMENT "${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake"
         VERBATIM
     )
     install(CODE "execute_process(
-        COMMAND ${VCVARSALL_BAT} x86 && nmake install
+        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install
         WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
         )"
     )
