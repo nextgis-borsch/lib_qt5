@@ -331,28 +331,37 @@ if(APPLE)
     )
 endif()
 
-get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
-find_file(VCVARSALL_BAT vcvarsall.bat "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../..")
-
 status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}")
-execute_process(
-    COMMAND ${VCVARSALL_BAT} x86 && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-)
 
 if(WIN32)
-    add_custom_target(build_qt ALL
-        COMMAND nmake
+    get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+    find_file(VCVARSALL_BAT vcvarsall.bat "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../..")
+
+    message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT}")
+
+    execute_process(
+        COMMAND ${VCVARSALL_BAT} x86 && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-        COMMENT "nmake"
+        COMMENT "${VCVARSALL_BAT} x86 && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}"
+    )
+
+    add_custom_target(build_qt ALL
+        COMMAND ${VCVARSALL_BAT} x86 && nmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+        COMMENT "${VCVARSALL_BAT} x86 && nmake"
         VERBATIM
     )
     install(CODE "execute_process(
-        COMMAND nmake install
+        COMMAND ${VCVARSALL_BAT} x86 && nmake install
         WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
         )"
     )
 else()
+    execute_process(
+        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+    )
+
     add_custom_target(build_qt ALL
         COMMAND make -j ${CPU_COUNT}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
