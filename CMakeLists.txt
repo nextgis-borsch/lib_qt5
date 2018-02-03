@@ -334,7 +334,6 @@ endif()
 status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}")
 
 if(WIN32)
-    # TODO: Need different arguments for vsdevcmd.bat and vcvarsall.bat. Now support only VC2017
     get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
     message(STATUS "VC_COMPILER_DIR: ${VC_COMPILER_DIR}")
     find_file(VCVARSALL_BAT
@@ -343,11 +342,14 @@ if(WIN32)
         PATH_SUFFIXES "Common7/Tools" "Tools"
     )
 
-    string(FIND ${CMAKE_GENERATOR_PLATFORM} "Win64" POS)
-    if(POS GREATER -1)
-        set(VCVARSALL_BAT_ARG -arch=amd64)
-    else()
-        set(VCVARSALL_BAT_ARG -arch=x86)
+    if(DEFINED CMAKE_GENERATOR)
+        # TODO: Need different arguments for vsdevcmd.bat and vcvarsall.bat. Now support only VC2017
+        string(FIND ${CMAKE_GENERATOR} "Win64" POS)
+        if(POS GREATER -1)
+            set(VCVARSALL_BAT_ARG -arch=amd64)
+        else()
+            set(VCVARSALL_BAT_ARG -arch=x86)
+        endif()
     endif()
 
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
