@@ -52,7 +52,7 @@ if(WIN32)
     message(STATUS "VC_COMPILER_DIR: ${VC_COMPILER_DIR}")
     find_file(VCVARSALL_BAT
         NAMES vsdevcmd.bat vcvarsall.bat
-        PATHS "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../.." "${VC_COMPILER_DIR}/../../../../../../../../" "${VC_COMPILER_DIR}/../../../../../../../"
+        PATHS "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../.." "${VC_COMPILER_DIR}/../../../../../../../.." "${VC_COMPILER_DIR}/../../../../../../.."
         PATH_SUFFIXES "Common7/Tools" "Tools"
     )
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT}")
