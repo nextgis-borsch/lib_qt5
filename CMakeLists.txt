@@ -45,6 +45,15 @@ if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
                        and BUILD_STATIC_LIBS keys are permitted")
 endif()
 
+# debug
+if(WIN32)
+    get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
+    message(STATUS "VC_COMPILER_DIR: ${VC_COMPILER_DIR}")
+    find_file(VCVARSALL_BAT vcvarsall.bat "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../..")
+    message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT}")
+    message(FATAL_ERROR "end test")
+endif()
+
 set(PACKAGE_NAME ${PROJECT_NAME})
 
 include(util)
