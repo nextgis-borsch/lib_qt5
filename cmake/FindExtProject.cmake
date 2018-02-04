@@ -307,9 +307,6 @@ function(find_extproject name)
     if(CMAKE_GENERATOR_TOOLSET)
         list(APPEND find_extproject_CMAKE_ARGS -DCMAKE_GENERATOR_TOOLSET=${CMAKE_GENERATOR_TOOLSET})
     endif()
-    if(SKIP_GIT_PULL)
-        list(APPEND find_extproject_CMAKE_ARGS -DSKIP_GIT_PULL=${SKIP_GIT_PULL})
-    endif()
 
     get_cmake_property(_variableNames VARIABLES)
     string (REGEX MATCHALL "(^|;)WITH_[A-Za-z0-9_]*" _matchedVars "${_variableNames}")
@@ -366,7 +363,8 @@ function(find_extproject name)
         GIT_SHALLOW TRUE
         CMAKE_ARGS ${find_extproject_CMAKE_ARGS}
         UPDATE_DISCONNECTED ${EXT_UPDATE_DISCONNECTED}
-        CONFIGURE_COMMAND "" # Disable configure
+        # CONFIGURE_COMMAND "" # Disable configure
+        # BUILD_COMMAND "cmake"
     )
 
     if(NOT EXISTS "${EXT_SOURCE_DIR}/.git")
