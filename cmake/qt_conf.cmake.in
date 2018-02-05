@@ -1,0 +1,6 @@
+# Reconfig to new install path
+
+execute_process(
+    COMMAND @CONFIGURE_CMD@ -redo -prefix @CMAKE_CURRENT_BINARY_DIR@/_CPack_Packages/@CMAKE_SYSTEM_NAME@/ZIP/@CPACK_PACKAGE_FILE_NAME@
+    WORKING_DIRECTORY @CMAKE_CURRENT_BINARY_DIR@/@QT_INPUT_NAME@
+)

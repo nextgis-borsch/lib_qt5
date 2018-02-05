@@ -53,7 +53,7 @@ set(VERSION "${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}.${QT_REV_VERSION}")
 report_version(${PROJECT_NAME} ${VERSION})
 
 set(SUBFOLDER "single/")
-set(CONFIGURE_ARGS -prefix ${CMAKE_INSTALL_PREFIX} -opensource -confirm-license -nomake examples -nomake tests -recheck-all ${QT_CONFIGURE_ARGS})
+set(CONFIGURE_ARGS -opensource -confirm-license -nomake examples -nomake tests ${QT_CONFIGURE_ARGS})
 
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
@@ -354,8 +354,10 @@ if(WIN32)
 
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
 
+    set(CONFIGURE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
+
     execute_process(
-        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
+        COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
 
@@ -371,8 +373,10 @@ if(WIN32)
         )"
     )
 else()
+    set(CONFIGURE_CMD ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
+
     execute_process(
-        COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS}
+        COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
 
@@ -390,6 +394,7 @@ else()
 endif()
 
 if(OSX_FRAMEWORK)
+    # TODO: Fix hardcoded to real install path
     find_package(PythonInterp REQUIRED)
     install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/mac_rpath_fix.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -433,5 +438,9 @@ set(CPACK_STRIP_FILES TRUE)
 # Get cpack zip archive name
 get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
+
+# Reconfig qt to new install path in CPack 
+configure_file("${PROJECT_SOURCE_DIR}/cmake/qt_conf.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake" @ONLY)
+set(CPACK_INSTALL_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake)
 
 include (CPack)

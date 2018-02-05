@@ -363,8 +363,6 @@ function(find_extproject name)
         GIT_SHALLOW TRUE
         CMAKE_ARGS ${find_extproject_CMAKE_ARGS}
         UPDATE_DISCONNECTED ${EXT_UPDATE_DISCONNECTED}
-        # CONFIGURE_COMMAND "" # Disable configure
-        # BUILD_COMMAND "cmake"
     )
 
     if(NOT EXISTS "${EXT_SOURCE_DIR}/.git")
@@ -423,49 +421,6 @@ function(find_extproject name)
 
         # Add include into ext_options.cmake.
         set(WITHOPT "${WITHOPT}include(${EXT_BINARY_DIR}/ext_options.cmake)\n" PARENT_SCOPE)
-    endif()
-
-    # TODO: Do we need this? ###################################################
-
-    if(WIN32)
-        set(_INST_ROOT_PATH /)
-    else()
-        set(_INST_ROOT_PATH ${CMAKE_INSTALL_PREFIX})
-    endif()
-
-    if(OSX_FRAMEWORK)
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/Applications")
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/Library")
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/Applications
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT applications)
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/Library
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT libraries)
-    else()
-        # create directories
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/bin")
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/lib")
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/include")
-        file(MAKE_DIRECTORY "${EXT_INSTALL_DIR}/share")
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/bin
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT applications)
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/lib
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT libraries)
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/include
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT headers)
-
-        install( DIRECTORY ${EXT_INSTALL_DIR}/share
-                 DESTINATION ${_INST_ROOT_PATH}
-                 COMPONENT libraries)
     endif()
 
 endfunction()
