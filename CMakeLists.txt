@@ -55,14 +55,6 @@ report_version(${PROJECT_NAME} ${VERSION})
 set(SUBFOLDER "single/")
 set(CONFIGURE_ARGS -opensource -confirm-license -nomake examples -nomake tests ${QT_CONFIGURE_ARGS})
 
-# Get cpack zip archive name
-get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
-
-# Hack for qt make routine
-if(CREATE_CPACK)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages/${CMAKE_SYSTEM_NAME}/ZIP/${PROJECT_CPACK_FILENAME})
-endif()
-
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
 elseif(BUILD_SHARED_LIBS)
@@ -399,6 +391,37 @@ else()
         WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
         )"
     )
+endif()
+
+# Get cpack zip archive name
+get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+
+# Hack for qt make routine
+if(CREATE_CPACK_LIGHT)
+    if(WIN32)
+        set(EXT ".exe")
+    endif()
+    set(PACK_FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lconvert${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lrelease${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lupdate${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtplugininfo${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtdiag${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtpaths${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qmake${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/moc${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qlalr${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qvkgen${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/rcc${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/uic${EXT}
+    )
+
+    add_custom_target(create_light_pack ALL
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${PROJECT_CPACK_FILENAME}.zip" --format=zip
+        DEPENDS build_qt
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+
 endif()
 
 if(OSX_FRAMEWORK)
