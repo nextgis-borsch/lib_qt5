@@ -55,6 +55,14 @@ report_version(${PROJECT_NAME} ${VERSION})
 set(SUBFOLDER "single/")
 set(CONFIGURE_ARGS -opensource -confirm-license -nomake examples -nomake tests ${QT_CONFIGURE_ARGS})
 
+# Get cpack zip archive name
+get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+
+# Hack for qt make routine
+if(CREATE_CPACK)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages/${CMAKE_SYSTEM_NAME}/ZIP/${PROJECT_CPACK_FILENAME})
+endif()
+
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
 elseif(BUILD_SHARED_LIBS)
@@ -435,12 +443,12 @@ set(CPACK_GENERATOR "ZIP")
 set(CPACK_MONOLITHIC_INSTALL ON)
 set(CPACK_STRIP_FILES TRUE)
 
-# Get cpack zip archive name
-get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
 
-# Reconfig qt to new install path in CPack 
-configure_file("${PROJECT_SOURCE_DIR}/cmake/qt_conf.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake" @ONLY)
-set(CPACK_INSTALL_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake)
+if(NOT CREATE_CPACK)
+    # Reconfig qt to new install path in CPack. Reconfig need make clean?
+    configure_file("${PROJECT_SOURCE_DIR}/cmake/qt_conf.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake" @ONLY)
+    set(CPACK_INSTALL_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake)
+endif()
 
 include (CPack)
