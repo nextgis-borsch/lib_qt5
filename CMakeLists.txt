@@ -417,7 +417,7 @@ if(CREATE_CPACK_LIGHT)
     )
 
     add_custom_target(create_light_pack ALL
-        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${PROJECT_CPACK_FILENAME}.zip" --format=zip
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${PROJECT_CPACK_FILENAME}.zip" --format=zip ${PACK_FILES}
         DEPENDS build_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
