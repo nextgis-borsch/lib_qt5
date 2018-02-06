@@ -333,6 +333,10 @@ endif()
 
 status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}")
 
+if(CREATE_CPACK_LIGHT)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/inst)
+endif()
+
 if(WIN32)
     get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
     message(STATUS "VC_COMPILER_DIR: ${VC_COMPILER_DIR}")
@@ -400,26 +404,31 @@ get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 if(CREATE_CPACK_LIGHT)
     if(WIN32)
         set(EXT ".exe")
+        set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake)
+    else()
+        set(MAKE_CMD make)
     endif()
+
     set(PACK_FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lconvert${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lrelease${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/lupdate${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtplugininfo${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtdiag${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qttools/bin/qtpaths${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qmake${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/moc${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qlalr${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/qvkgen${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/rcc${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase/bin/uic${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lconvert${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lrelease${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lupdate${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtplugininfo${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtdiag${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtpaths${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qmake${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/moc${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qlalr${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qvkgen${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/rcc${EXT}
+        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/uic${EXT}
     )
 
     add_custom_target(create_light_pack ALL
-        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${PROJECT_CPACK_FILENAME}.zip" --format=zip ${PACK_FILES}
+        COMMAND ${MAKE_CMD} install
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip ${PACK_FILES}
         DEPENDS build_qt
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
 
 endif()
