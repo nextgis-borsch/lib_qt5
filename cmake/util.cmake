@@ -92,6 +92,7 @@ macro(build_if_needed PATH NAME CPU_COUNT)
 
         execute_process(COMMAND ${CMAKE_COMMAND} --build . --config release ${OPTIONAL_ARGS}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build
+            TIMEOUT 1200 # 20 min
             RESULT_VARIABLE EXECUTE_RESULT_CODE
         )
 
