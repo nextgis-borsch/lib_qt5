@@ -98,18 +98,6 @@ else()
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -release -strip)
 endif()
 
-# http://download.qt.io/official_releases/qt/5.10/5.10.0/single/qt-everywhere-src-5.10.0.tar.xz
-set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
-set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
-set(OUT_NAME "qt.tar.xz")
-
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
-    status_message("Download ${DOWNLOAD_URL}")
-    file(DOWNLOAD "${DOWNLOAD_URL}" "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}"
-         SHOW_PROGRESS
-     )
-endif()
-
 include(ProcessorCount)
 ProcessorCount(CPU_COUNT)
 if(NOT CPU_COUNT OR CPU_COUNT EQUAL 0)
@@ -317,6 +305,18 @@ else()
 endif()
 
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
+
+# http://download.qt.io/official_releases/qt/5.10/5.10.0/single/qt-everywhere-src-5.10.0.tar.xz
+set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
+set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
+set(OUT_NAME "qt.tar.xz")
+
+if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
+    status_message("Download ${DOWNLOAD_URL}")
+    file(DOWNLOAD "${DOWNLOAD_URL}" "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}"
+         SHOW_PROGRESS
+     )
+endif()
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME})
     status_message("Extract ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
