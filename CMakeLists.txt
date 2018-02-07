@@ -320,7 +320,10 @@ message(STATUS "Configure args: ${CONFIGURE_ARGS}")
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME})
     status_message("Extract ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME})
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}
+        TIMEOUT 950 # ~15 min
+    )
 endif()
 
 if(APPLE)
@@ -339,7 +342,6 @@ endif()
 
 if(WIN32)
     get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
-    message(STATUS "VC_COMPILER_DIR: ${VC_COMPILER_DIR}")
     find_file(VCVARSALL_BAT
         NAMES vsdevcmd.bat vcvarsall.bat
         PATHS "${VC_COMPILER_DIR}/.." "${VC_COMPILER_DIR}/../.." "${VC_COMPILER_DIR}/../../../../../../../.." "${VC_COMPILER_DIR}/../../../../../../.."
