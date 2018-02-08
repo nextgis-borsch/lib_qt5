@@ -404,30 +404,14 @@ get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 # Hack for qt make routine
 if(CREATE_CPACK_LIGHT)
     if(WIN32)
-        set(EXT ".exe")
         set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake)
     else()
         set(MAKE_CMD make)
     endif()
 
-    set(PACK_FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lconvert${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lrelease${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/lupdate${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtplugininfo${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtdiag${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qtpaths${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qmake${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/moc${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qlalr${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/qvkgen${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/rcc${EXT}
-        ${CMAKE_CURRENT_BINARY_DIR}/inst/bin/uic${EXT}
-    )
-
     add_custom_target(create_light_pack ALL
         COMMAND ${MAKE_CMD} install
-        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip ${PACK_FILES}
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip ${CMAKE_CURRENT_BINARY_DIR}/inst/bin
         DEPENDS build_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
