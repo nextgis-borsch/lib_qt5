@@ -404,14 +404,14 @@ get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 # Hack for qt make routine
 if(CREATE_CPACK_LIGHT)
     if(WIN32)
-        set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake)
+        set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install)
     else()
-        set(MAKE_CMD make)
+        set(MAKE_CMD make install)
     endif()
 
     add_custom_target(create_light_pack ALL
-        COMMAND ${MAKE_CMD} install
-        COMMAND ${CMAKE_COMMAND} -E tar cfv ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip --format=zip ${CMAKE_CURRENT_BINARY_DIR}/inst/bin
+        COMMAND ${MAKE_CMD}
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip "${CMAKE_CURRENT_BINARY_DIR}/inst/bin"
         DEPENDS build_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
