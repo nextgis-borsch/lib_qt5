@@ -409,13 +409,17 @@ if(CREATE_CPACK_LIGHT)
         set(MAKE_CMD make install)
     endif()
 
-    add_custom_target(create_light_pack ALL
+    add_custom_target(install_light_pack ALL
         COMMAND ${MAKE_CMD}
-        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip "${CMAKE_CURRENT_BINARY_DIR}/inst/bin"
         DEPENDS build_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
     )
 
+    add_custom_target(create_light_pack ALL
+        COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip "${CMAKE_CURRENT_BINARY_DIR}/inst/bin"
+        DEPENDS install_light_pack
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
 endif()
 
 if(OSX_FRAMEWORK)
