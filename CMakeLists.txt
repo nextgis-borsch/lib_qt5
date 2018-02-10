@@ -307,7 +307,14 @@ endif()
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
 
 # http://download.qt.io/official_releases/qt/5.10/5.10.0/single/qt-everywhere-src-5.10.0.tar.xz
-set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
+# http://download.qt.io/official_releases/qt/5.9/5.9.4/single/qt-everywhere-opensource-src-5.9.4.tar.xz
+
+if(VERSION VERSION_LESS "5.10.0")
+    set(QT_INPUT_NAME "qt-everywhere-opensource-src-${VERSION}")
+else()
+    set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
+endif()
+
 set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
 set(OUT_NAME "qt.tar.xz")
 
