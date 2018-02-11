@@ -334,7 +334,7 @@ endif()
 
 # if(APPLE)
 status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
-execute_process(COMMAND ${GIT_EXECUTABLE} apply -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
+execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
 )
 # endif()
