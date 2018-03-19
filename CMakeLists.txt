@@ -45,7 +45,7 @@ if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
                        and BUILD_STATIC_LIBS keys are permitted")
 endif()
 
-set(PACKAGE_NAME ${PROJECT_NAME})
+set(INSTALL_CMAKECONF_DIR CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
 
 include(util)
 check_version(QT_MAJOR_VERSION QT_MINOR_VERSION QT_REV_VERSION)
@@ -105,32 +105,38 @@ if(NOT CPU_COUNT OR CPU_COUNT EQUAL 0)
 endif()
 
 if(CPU_COUNT GREATER 1 AND WIN32)
-    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -mp )
-endif()
-
-find_package(Git)
-if(NOT GIT_FOUND)
-  message(FATAL_ERROR "git is required")
+    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -mp)
 endif()
 
 include(FindAnyProject)
 
+if(WIN32)
 find_anyproject(ZLIB DEFAULT ON)
 if(ZLIB_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
     if(TARGET ${ZLIB_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-zlib)
         get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        if(OSX_FRAMEWORK)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "zlib")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBZ_LIBS=\"-lzlib\"")
-
+            create_symlink(${PARENT_DIR} "zlib")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "ZLIB_LIBS=\"-lzlib\"")
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+    		list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+    		set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+    		set(ENV{INCLUDE} "$ENV{INCLUDE};${ZLIB_INCLUDE_DIRS}")
+            get_filename_component(PATH_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{PATH} "$ENV{PATH};${PATH_DIR}")
+        endif()
         # Check if build needed
-        build_if_needed(LINK_SEARCH_PATH "ZLIB" CPU_COUNT)
+        build_if_needed(${LINK_SEARCH_PATH} "ZLIB" CPU_COUNT)
     endif()
+endif()
 endif()
 
 find_anyproject(OpenSSL DEFAULT ON)
@@ -138,16 +144,24 @@ if(OPENSSL_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIRS})
     if(TARGET ${OPENSSL_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -openssl-linked)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "openssl")
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-lopenssl\"")
-
+            create_symlink(${PARENT_DIR} "openssl")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-lopenssl\"")
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${OPENSSL_INCLUDE_DIRS}")
+            set(ENV{OPENSSL_LIBS} "${LINK_SEARCH_PATH}")
+        endif()
         # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "OpenSSL" ${CPU_COUNT})
+        build_if_needed(${LINK_SEARCH_PATH} "OpenSSL" CPU_COUNT)
     endif()
 endif()
 
@@ -156,14 +170,22 @@ if(FREETYPE_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
     if(TARGET ${FREETYPE_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-freetype)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${FREETYPE_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "freetype")
+            create_symlink(${PARENT_DIR} "freetype")
 
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_LIBS=\"-lfreetype\"")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_LIBS=\"-lfreetype\"")
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${FREETYPE_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${FREETYPE_INCLUDE_DIRS}")
+        endif()
 
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "Freetype" ${CPU_COUNT})
@@ -177,14 +199,22 @@ if(JPEG_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS})
     if(TARGET ${JPEG_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libjpeg)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${JPEG_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "jpeg")
+            create_symlink(${PARENT_DIR} "jpeg")
 
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_LIBS=\"-ljpeg\"")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_LIBS=\"-ljpeg\"")
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${JPEG_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${JPEG_INCLUDE_DIRS}")
+        endif()
 
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "JPEG" ${CPU_COUNT})
@@ -196,15 +226,23 @@ if(PNG_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS})
     if(TARGET ${PNG_LIBRARIES})
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libpng)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${PNG_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "png")
+            create_symlink(${PARENT_DIR} "png")
 
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_LIBS=\"-lpng\"")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_LIBS=\"-lpng\"")
 
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${PNG_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${PNG_INCLUDE_DIRS}")
+        endif()
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "PNG" ${CPU_COUNT})
     endif()
@@ -252,35 +290,50 @@ find_anyproject(SQLite3 DEFAULT ON)
 if(SQLITE3_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS})
     if(TARGET ${SQLITE3_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-sqlite)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-sqlite -sql-sqlite)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${SQLITE3_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "sqlite3")
+            create_symlink(${PARENT_DIR} "sqlite3")
 
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_LIBS=\"-lsqlite3\"")
-
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_LIBS=\"-lsqlite3\"")
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${SQLITE3_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${SQLITE3_INCLUDE_DIRS}")
+        endif()
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "SQLite3" ${CPU_COUNT})
     endif()
 endif()
 
-find_anyproject(PostgreSQL DEFAULT ON)
+find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
 if(POSTGRESQL_FOUND)
     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${POSTGRESQL_INCLUDE_DIRS})
     if(TARGET ${POSTGRESQL_LIBRARIES})
-        # set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -feature-psql)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -sql-psql)
+        if(OSX_FRAMEWORK)
+            get_target_property(LINK_SEARCH_PATH ${POSTGRESQL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-        set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-        create_symlink(${PARENT_DIR} "pq")
+            create_symlink(${PARENT_DIR} "pq")
 
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_LIBS=\"-lpq\"")
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_LIBS=\"-lpq\"")
 
+        elseif(WIN32)
+            get_target_property(LINK_SEARCH_PATH ${POSTGRESQL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+            list(APPEND CONFIGURE_ARGS -l ${LINK_SEARCH_PATH})
+            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} PATH)
+            set(ENV{LIB} "$ENV{LIB};${PARENT_DIR}")
+            set(ENV{INCLUDE} "$ENV{INCLUDE};${POSTGRESQL_INCLUDE_DIRS}")
+        endif()
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "PostgreSQL" ${CPU_COUNT})
     endif()
@@ -303,8 +356,6 @@ if(WIN32)
 else()
     set(CONFIGURE_CMD_NAME configure)
 endif()
-
-message(STATUS "Configure args: ${CONFIGURE_ARGS}")
 
 # http://download.qt.io/official_releases/qt/5.10/5.10.0/single/qt-everywhere-src-5.10.0.tar.xz
 # http://download.qt.io/official_releases/qt/5.9/5.9.4/single/qt-everywhere-opensource-src-5.9.4.tar.xz
@@ -332,18 +383,38 @@ if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME})
     )
 endif()
 
-# if(APPLE)
+find_package(Git)
+if(NOT GIT_FOUND)
+  message(FATAL_ERROR "git is required")
+endif()
+
+if(APPLE)
+    status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/xcode91.patch")
+    execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v  ${CMAKE_CURRENT_SOURCE_DIR}/patch/xcode91.patch
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+        OUTPUT_QUIET ERROR_QUIET
+    )
+endif()
 status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
 execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+    OUTPUT_QUIET ERROR_QUIET
 )
-# endif()
 
+if(OPENSSL_FOUND AND OPENSSL_VERSION VERSION_GREATER "1.0.2" AND QT_MINOR_VERSION LESS 10)
+    # Apply patch for 1.1
+    status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/openssl11.patch")
+    execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/openssl11.patch
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+        OUTPUT_QUIET ERROR_QUIET
+    )
+endif()
+
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/inst)
+
+message(STATUS "Configure args: ${CONFIGURE_ARGS}")
 status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}")
 
-if(CREATE_CPACK_LIGHT)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/inst)
-endif()
 
 if(WIN32)
     get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
@@ -378,11 +449,6 @@ if(WIN32)
         COMMENT "${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake"
         VERBATIM
     )
-    install(CODE "execute_process(
-        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install
-        WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-        )"
-    )
 else()
     set(CONFIGURE_CMD ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
 
@@ -397,85 +463,75 @@ else()
         COMMENT "${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/make -j ${CPU_COUNT}"
         VERBATIM
     )
-    install(CODE "execute_process(
-        COMMAND make install
-        WORKING_DIRECTORY  ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+endif()
+
+# Get cpack archive name
+get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+
+if(WIN32)
+    set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install)
+else()
+    set(MAKE_CMD make install)
+endif()
+
+add_custom_target(preinstall_qt ALL
+    COMMAND ${MAKE_CMD}
+    DEPENDS build_qt
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
+)
+
+if(OSX_FRAMEWORK)
+    find_package(PythonInterp REQUIRED)
+    install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/mac_rpath_fix.py
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )"
     )
 endif()
 
-# Get cpack zip archive name
-get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
+set(PACKAGE_NAME ${PROJECT_NAME})
+string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
+
+if(REGISTER_PACKAGE)
+    # Export the package for use from the build-tree
+    # (this registers the build-tree with a global CMake-registry)
+    export(PACKAGE ${PACKAGE_UPPER_NAME})
+endif()
+
+
+# Create the <Package>Config.cmake file
+configure_file(cmake/PackageConfig.cmake.in
+    ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
+
+if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+    install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/inst/ DESTINATION ".")
+    install(FILES
+      ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
+      DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
+endif()
 
 # Hack for qt make routine
 if(CREATE_CPACK_LIGHT)
-    if(WIN32)
-        set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install)
-    else()
-        set(MAKE_CMD make install)
-    endif()
-
-    add_custom_target(install_light_pack ALL
-        COMMAND ${MAKE_CMD}
-        DEPENDS build_qt
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}
-    )
-
     add_custom_target(create_light_pack ALL
         COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip "${CMAKE_CURRENT_BINARY_DIR}/inst/bin"
-        DEPENDS install_light_pack
+        DEPENDS build_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endif()
 
-if(OSX_FRAMEWORK)
-    # TODO: Fix hardcoded to real install path
-    find_package(PythonInterp REQUIRED)
-    install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/mac_rpath_fix.py
-            WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        )"
-    )
-endif()
-
-if (REGISTER_PACKAGE)
-    # Export the package for use from the build-tree
-    # (this registers the build-tree with a global CMake-registry)
-
-    set(PACKAGE_NAME Qt5)
-    string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
-    set(PACKAGE_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME}/qtbase)
-
-    export(PACKAGE ${PACKAGE_NAME})
-
-    include(CMakePackageConfigHelpers)
-    configure_package_config_file(
-        ${CMAKE_SOURCE_DIR}/cmake/PackageConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}Config.cmake
-        INSTALL_DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
-    write_basic_package_version_file(
-        ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_NAME}ConfigVersion.cmake
-        VERSION ${VERSION}
-        COMPATIBILITY AnyNewerVersion )
-endif()
-
 # Archiving ====================================================================
 
-set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
-set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
-set(CPACK_PACKAGE_VERSION "${VERSION}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
-set(CPACK_PACKAGE_RELOCATABLE TRUE)
-set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-set(CPACK_GENERATOR "ZIP")
-set(CPACK_MONOLITHIC_INSTALL ON)
-set(CPACK_STRIP_FILES TRUE)
+if(NOT CREATE_CPACK_LIGHT)
+    set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")
+    set(CPACK_PACKAGE_VENDOR "${PACKAGE_VENDOR}")
+    set(CPACK_PACKAGE_VERSION "${VERSION}")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_NAME} Installation")
+    set(CPACK_PACKAGE_RELOCATABLE TRUE)
+    set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
+    set(CPACK_GENERATOR "ZIP")
+    set(CPACK_MONOLITHIC_INSTALL ON)
+    set(CPACK_STRIP_FILES TRUE)
 
-set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
+    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_CPACK_FILENAME})
 
-if(NOT CREATE_CPACK)
-    # Reconfig qt to new install path in CPack. Reconfig need make clean?
-    configure_file("${PROJECT_SOURCE_DIR}/cmake/qt_conf.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake" @ONLY)
-    set(CPACK_INSTALL_SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/qt_conf.cmake)
+    include (CPack)
 endif()
-
-include (CPack)
