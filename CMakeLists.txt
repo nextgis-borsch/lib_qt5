@@ -370,15 +370,16 @@ if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
     status_message("Download ${DOWNLOAD_URL}")
     file(DOWNLOAD "${DOWNLOAD_URL}" "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}"
          SHOW_PROGRESS
-     )
+    )
+    status_message("Downloaded ...")
 endif()
 
 if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME})
     status_message("Extract ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xvzf ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}
-        TIMEOUT 1800
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}
     )
+    status_message("Extract finished ...")
 endif()
 
 find_package(Git)
