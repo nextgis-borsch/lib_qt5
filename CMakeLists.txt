@@ -376,12 +376,18 @@ else()
     set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
 endif()
 
+if(WIN32)
+    set(ARCH_OUT_DIR "C:\\")
+else()
+    set(ARCH_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
+
 set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
 set(OUT_NAME "qt.tar.xz")
 
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
+if(NOT EXISTS "${ARCH_OUT_DIR}/${OUT_NAME}")
     status_message("Download ${DOWNLOAD_URL}")
-    file(DOWNLOAD "${DOWNLOAD_URL}" "${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}"
+    file(DOWNLOAD "${DOWNLOAD_URL}" "${ARCH_OUT_DIR}/${OUT_NAME}"
          SHOW_PROGRESS
     )
     status_message("Downloaded ...")
@@ -389,13 +395,13 @@ endif()
 
 # Make path shorter: https://forum.qt.io/topic/86079/qtwebengine-build-failed-on-gn-bootstrap-py/4
 set(QT_INPUT_NAME_NEW q)
-if(NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW})
-    status_message("Extract ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}")
+if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+    status_message("Extract ${ARCH_OUT_DIR}/${OUT_NAME}")
     execute_process(
-        COMMAND ${CMAKE_COMMAND} -E tar xzf ${CMAKE_CURRENT_BINARY_DIR}/${OUT_NAME}
+        COMMAND ${CMAKE_COMMAND} -E tar xzf ${ARCH_OUT_DIR}/${OUT_NAME}
     )
     status_message("Extract finished ...")
-    file(RENAME ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME} ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW})
+    file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
 endif()
 
 
@@ -408,13 +414,13 @@ endif()
 if(APPLE)
     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/xcode91.patch")
     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v  ${CMAKE_CURRENT_SOURCE_DIR}/patch/xcode91.patch
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
         OUTPUT_QUIET ERROR_QUIET
     )
 endif()
 status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
 execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+    WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
     OUTPUT_QUIET ERROR_QUIET
 )
 
@@ -422,7 +428,7 @@ if(OPENSSL_FOUND AND OPENSSL_VERSION VERSION_GREATER "1.0.2" AND QT_MINOR_VERSIO
     # Apply patch for 1.1
     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/openssl11.patch")
     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/openssl11.patch
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
         OUTPUT_QUIET ERROR_QUIET
     )
 endif()
@@ -430,7 +436,7 @@ endif()
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/inst)
 
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
-status_message("Configure in ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}")
+status_message("Configure in ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}")
 
 
 if(WIN32)
@@ -453,31 +459,31 @@ if(WIN32)
 
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
 
-    set(CONFIGURE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
+    set(CONFIGURE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
 
     execute_process(
         COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
     )
 
     add_custom_target(build_qt ALL
         COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
         COMMENT "${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake"
         VERBATIM
     )
 else()
-    set(CONFIGURE_CMD ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
+    set(CONFIGURE_CMD ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
 
     execute_process(
         COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
     )
 
     add_custom_target(build_qt ALL
         COMMAND make -j ${CPU_COUNT}
-        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
-        COMMENT "${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}/make -j ${CPU_COUNT}"
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+        COMMENT "${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/make -j ${CPU_COUNT}"
         VERBATIM
     )
 endif()
@@ -494,7 +500,7 @@ endif()
 add_custom_target(preinstall_qt ALL
     COMMAND ${MAKE_CMD}
     DEPENDS build_qt
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${QT_INPUT_NAME_NEW}
+    WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
 )
 
 if(OSX_FRAMEWORK)
