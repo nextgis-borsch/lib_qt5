@@ -377,7 +377,7 @@ else()
 endif()
 
 if(WIN32)
-    set(ARCH_OUT_DIR "C:\\")
+    set(ARCH_OUT_DIR "C:/tmp")
 else()
     set(ARCH_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
