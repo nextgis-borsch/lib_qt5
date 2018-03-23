@@ -399,6 +399,7 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
     status_message("Extract ${ARCH_OUT_DIR}/${OUT_NAME}")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E tar xzf ${ARCH_OUT_DIR}/${OUT_NAME}
+        WORKING_DIRECTORY ${ARCH_OUT_DIR}
     )
     status_message("Extract finished ...")
     file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
