@@ -402,6 +402,13 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
         WORKING_DIRECTORY ${ARCH_OUT_DIR}
     )
     status_message("Extract finished ...")
+
+    # Fix for static build: https://forum.qt.io/topic/78457/build-qt-5-9-1-static-to-run-on-windows-7-x86-and-above-with-dynamic-opengl-opensll
+    if(BUILD_STATIC_LIBS)
+        file(READ ${ARCH_OUT_DIR}/${QT_INPUT_NAME}/qtbase/mkspecs/common/msvc-desktop.conf _CONF_CONTENTS)
+        string(REPLACE "MD" "MT" _CONF_CONTENTS "${_CONF_CONTENTS}")
+        file(WRITE ${ARCH_OUT_DIR}/${QT_INPUT_NAME}/qtbase/mkspecs/common/msvc-desktop.conf "${_CONF_CONTENTS}")
+    endif()
     file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
 endif()
 
