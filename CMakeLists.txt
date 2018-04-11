@@ -168,7 +168,7 @@ if(OPENSSL_FOUND)
                 set(LINK_SEARCH_PATH_I ${LINK_SEARCH_PATH})
             else()
                 get_target_property(LINK_SEARCH_PATH_I ${OPENSSL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            endif()    
+            endif()
             get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
             set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-l${LINK_NAME}\"")
             get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
@@ -548,7 +548,7 @@ endif()
 if(CREATE_CPACK_LIGHT)
     add_custom_target(create_light_pack ALL
         COMMAND ${CMAKE_COMMAND} -E tar "cfv" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_CPACK_FILENAME}.zip" --format=zip "${CMAKE_CURRENT_BINARY_DIR}/inst/bin"
-        DEPENDS build_qt
+        DEPENDS preinstall_qt
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     )
 endif()
