@@ -64,3 +64,17 @@ for f in files:
         for rpath in lib_rpaths:
             run(('install_name_tool', '-change', os.path.join(qt_install_lib_path, rpath), '@rpath/' + rpath, f))
         run(('install_name_tool', '-change', '/usr/lib/libz.1.dylib', '@rpath/zlib.framework/Versions/1/zlib', lib_path))
+
+qt_install_bin_path = os.path.join(qt_path, 'bin')
+
+bin_files = [
+    'lrelease', 'lupdate', 'lconvert', 'uic', 'rcc'
+]
+
+dependencies = [
+    'QtCore', 'QtXml'
+]
+
+for bin_file in bin_files:
+    for dependency in dependencies:
+        run(('install_name_tool', '-change', os.path.join(qt_install_lib_path, dependency + '.framework', 'Versions', '5', dependency), '@loader_path/../' +  os.path.join('lib', dependency + '.framework', 'Versions', '5', dependency), os.path.join(qt_install_bin_path, bin_file)))
