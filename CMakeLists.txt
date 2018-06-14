@@ -135,14 +135,16 @@ if(ZLIB_FOUND)
             get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
             set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-            warning_message("Copy ${LINK_SEARCH_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\")
             execute_process(
                 COMMAND ${CMAKE_COMMAND} -E make_directory "$ENV{USERPROFILE}\\source" "$ENV{USERPROFILE}\\source\\qtbase" "$ENV{USERPROFILE}\\source\\qtbase\\bin"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LINK_SEARCH_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
             )
-            if(NOT EXISTS $ENV{USERPROFILE}/source/qtbase/bin/zlib1.dll)
-                message(FATAL_ERROR "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll not exists!")
-            endif()
+
+            add_custom_command(OUTPUT $ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LINK_SEARCH_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
+                DEPENDS ${ZLIB_LIBRARIES}
+                COMMENT "Copy ${LINK_SEARCH_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\"
+            )
+
         endif()
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "ZLIB" CPU_COUNT)
