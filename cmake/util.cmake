@@ -90,10 +90,10 @@ macro(build_if_needed PATH NAME CPU_COUNT)
 
         if(EXISTS ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build)
 			set(WD ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build)
-		elseif(EXISTS ../build/${NAME}_EP-build)
-			set(WD ../build/${NAME}_EP-build)
+		elseif(EXISTS ${CMAKE_BINARY_DIR}/../build/${NAME}_EP-build)
+			set(WD ${CMAKE_BINARY_DIR}/../build/${NAME}_EP-build)
         else()
-            message(FATAL_ERROR "Not found working directory ${${NAME}_EP-build}")    
+            message(FATAL_ERROR "Not found working directory ${${NAME}_EP-build}")
 		endif()
 
         execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release ${OPTIONAL_ARGS}
