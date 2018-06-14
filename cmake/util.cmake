@@ -88,8 +88,16 @@ macro(build_if_needed PATH NAME CPU_COUNT)
             set(OPTIONAL_ARGS "--" "-j${CPU_COUNT}")
         endif()
 
+        if(EXISTS ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build)
+			set(WD ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build)
+		elseif(EXISTS ../build/${NAME}_EP-build)
+			set(WD ../build/${NAME}_EP-build)
+        else()
+            message(FATAL_ERROR "Not found working directory ${${NAME}_EP-build}")    
+		endif()
+
         execute_process(COMMAND ${CMAKE_COMMAND} --build . --config Release ${OPTIONAL_ARGS}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/third-party/build/${NAME}_EP-build
+            WORKING_DIRECTORY ${WD}
             RESULT_VARIABLE EXECUTE_RESULT_CODE
         )
 
