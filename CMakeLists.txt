@@ -138,16 +138,7 @@ if(ZLIB_FOUND)
         # Check if build needed
         build_if_needed(${LINK_SEARCH_PATH} "ZLIB" CPU_COUNT)
 
-        if(WIN32)
-            warning_message("Copy ${LINK_SEARCH_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\")
-            execute_process(
-                COMMAND ${CMAKE_COMMAND} -E make_directory "$ENV{USERPROFILE}\\source" "$ENV{USERPROFILE}\\source\\qtbase" "$ENV{USERPROFILE}\\source\\qtbase\\bin"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different ${LINK_SEARCH_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
-            )
-            if(NOT EXISTS $ENV{USERPROFILE}/source/qtbase/bin/zlib1.dll)
-                message(FATAL_ERROR "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll not exists!")
-            endif()
-        endif()
+        set(ZIP_LIB_PATH ${LINK_SEARCH_PATH})
     endif()
 endif()
 endif()
@@ -411,7 +402,26 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
     file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
 endif()
 
+# Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
+if(WIN32)
+    warning_message("Copy ${ZIP_LIB_PATH} to ${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZIP_LIB_PATH} "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin\\zlib1.dll"
+    )
+    if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/qtbase/bin/zlib1.dll)
+        message(FATAL_ERROR "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin\\zlib1.dll not exists!")
+    endif()
 
+    warning_message("Copy ${ZIP_LIB_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$ENV{USERPROFILE}\\source" "$ENV{USERPROFILE}\\source\\qtbase" "$ENV{USERPROFILE}\\source\\qtbase\\bin"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZIP_LIB_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
+    )
+    if(NOT EXISTS $ENV{USERPROFILE}/source/qtbase/bin/zlib1.dll)
+        message(FATAL_ERROR "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll not exists!")
+    endif()
+endif()
 
 find_package(Git)
 if(NOT GIT_FOUND)
