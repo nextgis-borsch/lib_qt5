@@ -529,14 +529,13 @@ endif()
 
 
 # Create the <Package>Config.cmake file
-configure_file(cmake/PackageConfig.cmake.in
+configure_file(cmake/PackageConfigCurrent.cmake.in
     ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
+configure_file(cmake/PackageConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/inst/CMake/${PACKAGE_UPPER_NAME}Config.cmake @ONLY)
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
     install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/inst/ DESTINATION "." USE_SOURCE_PERMISSIONS)
-    install(FILES
-      ${PROJECT_BINARY_DIR}/${PACKAGE_UPPER_NAME}Config.cmake
-      DESTINATION ${INSTALL_CMAKECONF_DIR} COMPONENT dev)
 endif()
 
 # Hack for qt make routine
