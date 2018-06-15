@@ -403,7 +403,7 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
 endif()
 
 # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
-if(WIN32)
+if(WIN32 AND ZLIB_FOUND)
     warning_message("Copy ${ZIP_LIB_PATH} to ${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin"
