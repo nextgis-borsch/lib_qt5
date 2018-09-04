@@ -122,12 +122,14 @@ if(ZLIB_FOUND)
         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-zlib)
         get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
         if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+            if(WITH_ZLIB_EXTERNAL)
+                get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
 
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
+                set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
 
-            create_symlink(${PARENT_DIR} "zlib")
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "ZLIB_LIBS=\"-lzlib\"")
+                create_symlink(${PARENT_DIR} "zlib")
+                set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "ZLIB_LIBS=\"-lzlib\"")
+            endif()
         elseif(WIN32)
             get_target_property(LINK_SEARCH_PATH_I ${ZLIB_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
             get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
@@ -522,6 +524,7 @@ add_custom_target(preinstall_qt ALL
 
 if(OSX_FRAMEWORK)
     find_package(PythonInterp REQUIRED)
+    # FIXME: Uncomment fix path for zlib if WITH_ZLIB_EXTERNAL=ON
     install(CODE "execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/mac_rpath_fix.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )"
