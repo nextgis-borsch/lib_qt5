@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2018, NextGIS <info@nextgis.com>
+# Copyright (C) 2018-2019, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,10 @@ if(OSX_FRAMEWORK AND (BUILD_SHARED_LIBS OR BUILD_STATIC_LIBS))
 endif()
 
 set(INSTALL_CMAKECONF_DIR CMake CACHE INTERNAL "Installation directory for cmake config files" FORCE)
+
+
+set(PACKAGE_NAME ${PROJECT_NAME})
+string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 include(util)
 check_version(QT_MAJOR_VERSION QT_MINOR_VERSION QT_REV_VERSION)
@@ -114,251 +118,84 @@ endif()
 
 include(FindAnyProject)
 
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/project_lib)
+
 if(WIN32)
-find_anyproject(ZLIB DEFAULT ON)
-if(ZLIB_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${ZLIB_INCLUDE_DIRS})
-    if(TARGET ${ZLIB_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-zlib)
-        get_target_property(LINK_SEARCH_PATH ${ZLIB_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            if(WITH_ZLIB_EXTERNAL)
-                get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-                set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-                create_symlink(${PARENT_DIR} "zlib")
-                set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "ZLIB_LIBS=\"-lzlib\"")
-            endif()
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${ZLIB_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "ZLIB_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "ZLIB" CPU_COUNT)
-
-        set(ZIP_LIB_PATH ${LINK_SEARCH_PATH})
+    find_anyproject(ZLIB DEFAULT ON)
+    if(ZLIB_FOUND)
+        add_dependency(${ZLIB_INCLUDE_DIRS} ${ZLIB_LIBRARIES} -system-zlib ZLIB)
     endif()
-endif()
 endif()
 
 find_anyproject(OpenSSL DEFAULT ON)
 if(OPENSSL_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIRS})
-    if(TARGET ${OPENSSL_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -openssl-linked)
-        get_target_property(LINK_SEARCH_PATH ${OPENSSL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "openssl")
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-lopenssl\"")
-        elseif(WIN32)
-            if(BUILD_STATIC_LIBS)
-                set(LINK_SEARCH_PATH_I ${LINK_SEARCH_PATH})
-            else()
-                get_target_property(LINK_SEARCH_PATH_I ${OPENSSL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            endif()
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "OPENSSL_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "OpenSSL" CPU_COUNT)
-    endif()
+    add_dependency(OPENSSL -openssl-linked ${OPENSSL_INCLUDE_DIRS} ${OPENSSL_LIBRARIES})
 endif()
 
 find_anyproject(Freetype DEFAULT ON)
 if(FREETYPE_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-    if(TARGET ${FREETYPE_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-freetype)
-        get_target_property(LINK_SEARCH_PATH ${FREETYPE_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
+    add_dependency(FREETYPE -system-freetype ${FREETYPE_INCLUDE_DIRS} ${FREETYPE_LIBRARIES})
+endif()
 
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "freetype")
-
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_LIBS=\"-lfreetype\"")
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${FREETYPE_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "FREETYPE_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "Freetype" ${CPU_COUNT})
+if(NOT APPLE)
+    find_anyproject(HarfBuzz DEFAULT ON)
+    if(HARFBUZZ_FOUND)
+        add_dependency(HARFBUZZ -system-harfbuzz ${HARFBUZZ_INCLUDE_DIRS} ${HARFBUZZ_LIBRARIES})
+        # file(MAKE_DIRECTORY ${HARFBUZZ_INCLUDE_DIRS}/harfbuzz)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${HARFBUZZ_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS}/harfbuzz)
     endif()
 endif()
 
-# TODO: -harfbuzz ............ Select used HarfBuzz-NG [system/qt/no]
-
 find_anyproject(JPEG DEFAULT ON)
 if(JPEG_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${JPEG_INCLUDE_DIRS})
-    if(TARGET ${JPEG_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libjpeg)
-        get_target_property(LINK_SEARCH_PATH ${JPEG_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "jpeg")
-
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_LIBS=\"-ljpeg\"")
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${JPEG_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBJPEG_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "JPEG" ${CPU_COUNT})
-    endif()
+    add_dependency(LIBJPEG -system-libjpeg ${JPEG_INCLUDE_DIRS} ${JPEG_LIBRARIES})
 endif()
 
 find_anyproject(PNG DEFAULT ON)
 if(PNG_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS})
-    if(TARGET ${PNG_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-libpng)
-        get_target_property(LINK_SEARCH_PATH ${PNG_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "png")
-
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_LIBS=\"-lpng\"")
-
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${PNG_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "LIBPNG_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "PNG" ${CPU_COUNT})
-    endif()
+    add_dependency(LIBPNG -system-libpng ${PNG_INCLUDE_DIRS} ${PNG_LIBRARIES})
 endif()
 
-# find_anyproject(TIFF DEFAULT ON)
-# if(TIFF_FOUND)
-#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${TIFF_INCLUDE_DIRS})
-#     if(TARGET ${TIFF_LIBRARIES})
-#         if(WIN32)
-#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-#         else()
-#             get_target_property(LINK_SEARCH_PATH ${TIFF_LIBRARIES} LOCATION)
-#         endif()
-#         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-#         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -L ${PARENT_DIR})
-#
-#         if(WIN32)
-#             warning_message("Copy ${LINK_SEARCH_PATH}")
-#             execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LINK_SEARCH_PATH} ${PARENT_DIR}/libtiff.lib)
-#         endif()
-#
-#         create_symlink(${PARENT_DIR} "tiff")
-#     endif()
-# endif()
-#
+find_anyproject(TIFF DEFAULT ON)
+if(TIFF_FOUND)
+    add_dependency(TIFF -system-tiff ${TIFF_INCLUDE_DIRS} ${TIFF_LIBRARIES})
+endif()
+
+find_anyproject(WEBP DEFAULT ON)
+find_anyproject(WEBPDEMUX DEFAULT ON)
+find_anyproject(WEBPMUX DEFAULT ON)
+if(WEBP_FOUND AND WEBPDEMUX_FOUND AND WEBPMUX_FOUND)
+    set(W_INC_DIRS ${WEBP_INCLUDE_DIRS} ${WEBPDEMUX_INCLUDE_DIRS} ${WEBPMUX_INCLUDE_DIRS})
+    set(W_LIBRARIES ${WEBP_LIBRARIES} ${WEBPDEMUX_LIBRARIES} ${WEBPMUX_LIBRARIES})
+    add_dependency(WEBP -system-webp "${W_INC_DIRS}" "${W_LIBRARIES}")
+endif()
+
 # find_anyproject(GIF DEFAULT ON)
 # if(GIF_FOUND)
-#     set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${GIF_INCLUDE_DIRS})
-#     if(TARGET ${GIF_LIBRARIES})
-#         set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-gif)
-#         if(WIN32)
-#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-#         else()
-#             get_target_property(LINK_SEARCH_PATH ${GIF_LIBRARIES} LOCATION)
-#         endif()
-#         get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-#         if(OSX_FRAMEWORK)
-#             set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-#         endif()
-#     endif()
+#     add_dependency(${GIF_INCLUDE_DIRS} ${GIF_LIBRARIES} -system-gif)
 # endif()
 
 find_anyproject(SQLite3 DEFAULT ON)
 if(SQLITE3_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${SQLITE3_INCLUDE_DIRS})
-    if(TARGET ${SQLITE3_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -system-sqlite -sql-sqlite)
-        get_target_property(LINK_SEARCH_PATH ${SQLITE3_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "sqlite3")
-
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_LIBS=\"-lsqlite3\"")
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${SQLITE3_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "SQLITE_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "SQLite3" ${CPU_COUNT})
-    endif()
+    add_dependency(SQLITE "-system-sqlite;-sql-sqlite" ${SQLITE3_INCLUDE_DIRS} ${SQLITE3_LIBRARIES})
 endif()
 
 find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
 if(POSTGRESQL_FOUND)
-    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${POSTGRESQL_INCLUDE_DIRS})
-    if(TARGET ${POSTGRESQL_LIBRARIES})
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -sql-psql)
-        get_target_property(LINK_SEARCH_PATH ${POSTGRESQL_LIBRARIES} IMPORTED_LOCATION_RELEASE)
-        if(OSX_FRAMEWORK)
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH} DIRECTORY)
-
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-
-            create_symlink(${PARENT_DIR} "pq")
-
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_LIBS=\"-lpq\"")
-
-        elseif(WIN32)
-            get_target_property(LINK_SEARCH_PATH_I ${POSTGRESQL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
-            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
-            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "PSQL_LIBS=\"-l${LINK_NAME}\"")
-            get_filename_component(PARENT_DIR ${LINK_SEARCH_PATH_I} PATH)
-            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${PARENT_DIR})
-        endif()
-        # Check if build needed
-        build_if_needed(${LINK_SEARCH_PATH} "PostgreSQL" ${CPU_COUNT})
-    endif()
+    add_dependency(PSQL -sql-psql ${POSTGRESQL_INCLUDE_DIRS} ${POSTGRESQL_LIBRARIES})
 endif()
 
 foreach(CONF_INC_DIR ${CONFIGURE_ARGS_INCLUDE_DIRS})
     list(APPEND CONFIGURE_ARGS -I${CONF_INC_DIR})
 endforeach()
 
-foreach(CONF_LINK_LIB ${CONFIGURE_ARGS_LINK_LIBS})
-    # if(OSX_FRAMEWORK)
-        # list(APPEND CONFIGURE_ARGS -F${CONF_LINK_LIB})
-    # else()
+if(OSX_FRAMEWORK)
+    list(APPEND CONFIGURE_ARGS -L${PROJECT_BINARY_DIR}/project_lib)
+else()
+    foreach(CONF_LINK_LIB ${CONFIGURE_ARGS_LINK_LIBS})
         list(APPEND CONFIGURE_ARGS -L${CONF_LINK_LIB})
-    # endif()
-endforeach()
+    endforeach()
+endif()
 
 if(WIN32)
     set(CONFIGURE_CMD_NAME configure.bat)
@@ -430,18 +267,23 @@ if(NOT GIT_FOUND)
   message(FATAL_ERROR "git is required")
 endif()
 
-if(APPLE)
-    status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/xcode91.patch")
-    execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v  ${CMAKE_CURRENT_SOURCE_DIR}/patch/xcode91.patch
-        WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-        OUTPUT_QUIET ERROR_QUIET
-    )
-endif()
-status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
-execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
-    WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-    OUTPUT_QUIET ERROR_QUIET
-)
+# if(APPLE)
+#     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/xcode91.patch")
+#     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v  ${CMAKE_CURRENT_SOURCE_DIR}/patch/xcode91.patch
+#         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+#         OUTPUT_QUIET ERROR_QUIET
+#     )
+#     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac2.patch")
+#     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac2.patch
+#         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+#         OUTPUT_QUIET ERROR_QUIET
+#     )
+# endif()
+# status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
+# execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
+#     WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+#     OUTPUT_QUIET ERROR_QUIET
+# )
 
 if(OPENSSL_FOUND AND OPENSSL_VERSION VERSION_GREATER "1.0.2" AND QT_MINOR_VERSION LESS 10)
     # Apply patch for 1.1
@@ -531,8 +373,6 @@ if(OSX_FRAMEWORK)
     )
 endif()
 
-set(PACKAGE_NAME ${PROJECT_NAME})
-string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
 if(REGISTER_PACKAGE)
     # Export the package for use from the build-tree

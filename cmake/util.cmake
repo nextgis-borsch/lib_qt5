@@ -3,7 +3,7 @@
 # Purpose:  CMake build scripts
 # Author:   Dmitry Baryshnikov, dmitry.baryshnikov@nexgis.com
 ################################################################################
-# Copyright (C) 2018, NextGIS <info@nextgis.com>
+# Copyright (C) 2018-2019, NextGIS <info@nextgis.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -28,8 +28,8 @@ function(check_version major minor rev)
 
     set(CHECK_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
     set(MAJOR_VERSION 5)
-    set(MINOR_VERSION 9)
-    set(REV_VERSION 4)
+    set(MINOR_VERSION 13)
+    set(REV_VERSION 0)
 
     set(${major} ${MAJOR_VERSION} PARENT_SCOPE)
     set(${minor} ${MINOR_VERSION} PARENT_SCOPE)
@@ -77,8 +77,8 @@ endfunction()
 
 macro(create_symlink PATH_TO_LIB LIB_NAME)
     if(OSX_FRAMEWORK)
-        warning_message("Create symlink ${PATH_TO_LIB}/lib${LIB_NAME}.so")
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${PATH_TO_LIB}/${LIB_NAME} ${PATH_TO_LIB}/lib${LIB_NAME}.so)
+        warning_message("Create symlink lib${LIB_NAME}.dylib")
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${PATH_TO_LIB} ${PROJECT_BINARY_DIR}/project_lib/lib${LIB_NAME}.dylib)
     endif()
 endmacro()
 
@@ -107,17 +107,102 @@ macro(build_if_needed PATH NAME CPU_COUNT)
     endif()
 endmacro()
 
-function( get_cpack_filename ver name )
-    get_compiler_version(COMPILER)
+macro(add_dependency PREFIX ARGS DEPENDENCY_INCLUDE_DIRS DEPENDENCY_LIBRARIES)
+    set(CONFIGURE_ARGS_INCLUDE_DIRS ${CONFIGURE_ARGS_INCLUDE_DIRS} ${DEPENDENCY_INCLUDE_DIRS})
+    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} ${ARGS})
+   
+    if(OSX_FRAMEWORK)
+        set(_LIBS)
+        foreach(DEPENDENCY_LIBRARY ${DEPENDENCY_LIBRARIES})
+            get_target_property(LINK_SEARCH_PATH ${DEPENDENCY_LIBRARY} IMPORTED_LOCATION_RELEASE)
+            create_symlink(${LINK_SEARCH_PATH} "${DEPENDENCY_LIBRARY}")
+            set(_LIBS "${_LIBS} -l${DEPENDENCY_LIBRARY}")
+        endforeach()
+        
+        # create_symlink(${LINK_LIBS_DIR} "${DEPENDENCY_LIBRARIES}")
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "${PREFIX}_LIBS=${_LIBS}")
+    elseif(WIN32)
+        set(_LIBS)
+        foreach(DEPENDENCY_LIBRARY ${DEPENDENCY_LIBRARIES})
+            if(BUILD_STATIC_LIBS)
+                get_target_property(LINK_SEARCH_PATH ${DEPENDENCY_LIBRARY} IMPORTED_LOCATION_RELEASE)
+                set(LINK_SEARCH_PATH_I ${LINK_SEARCH_PATH})
+            else()
+                get_target_property(LINK_SEARCH_PATH_I ${DEPENDENCY_LIBRARY} IMPORTED_IMPLIB_RELEASE)
+            endif()
 
-    if(BUILD_STATIC_LIBS)
-        set(STATIC_PREFIX "static-")
+            get_filename_component(LINK_NAME ${LINK_SEARCH_PATH_I} NAME_WE)
+            get_filename_component(LINK_LIBS_DIR ${LINK_SEARCH_PATH_I} PATH)
+            set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${LINK_LIBS_DIR})
+
+            set(_LIBS "${_LIBS} -l${DEPENDENCY_LIBRARY}")
+        endforeach()
+
+        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} "${PREFIX}_LIBS=${_LIBS}")
     endif()
+endmacro()
 
-    set(${name} ${PROJECT_NAME}-${STATIC_PREFIX}${ver}-${COMPILER} PARENT_SCOPE)
+
+# macro to find packages on the host OS
+macro( find_exthost_package )
+    if(CMAKE_CROSSCOMPILING)
+        set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
+        set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER )
+        set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER )
+
+        find_package( ${ARGN} )
+
+        set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
+        set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
+        set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+    else()
+        find_package( ${ARGN} )
+    endif()
+endmacro()
+
+# macro to find programs on the host OS
+macro( find_exthost_program )
+    if(CMAKE_CROSSCOMPILING)
+        set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
+        set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER )
+        set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER )
+
+        find_program( ${ARGN} )
+
+        set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
+        set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
+        set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+    else()
+        find_program( ${ARGN} )
+    endif()
+endmacro()
+
+function(get_prefix prefix IS_STATIC)
+  if(IS_STATIC)
+    set(STATIC_PREFIX "static-")
+      if(ANDROID)
+        set(STATIC_PREFIX "${STATIC_PREFIX}android-${ANDROID_ABI}-")
+      elseif(IOS)
+        set(STATIC_PREFIX "${STATIC_PREFIX}ios-${IOS_ARCH}-")
+      endif()
+    endif()
+  set(${prefix} ${STATIC_PREFIX} PARENT_SCOPE)
 endfunction()
 
-function( get_compiler_version ver )
+
+function(get_cpack_filename ver name)
+    get_compiler_version(COMPILER)
+
+    if(NOT DEFINED BUILD_STATIC_LIBS)
+      set(BUILD_STATIC_LIBS OFF)
+    endif()
+
+    get_prefix(STATIC_PREFIX ${BUILD_STATIC_LIBS})
+
+    set(${name} ${PACKAGE_NAME}-${ver}-${STATIC_PREFIX}${COMPILER} PARENT_SCOPE)
+endfunction()
+
+function(get_compiler_version ver)
     ## Limit compiler version to 2 or 1 digits
     string(REPLACE "." ";" VERSION_LIST ${CMAKE_C_COMPILER_VERSION})
     list(LENGTH VERSION_LIST VERSION_LIST_LEN)

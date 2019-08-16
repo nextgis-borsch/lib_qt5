@@ -20,12 +20,13 @@
 # along with this script.  If not, see <http://www.gnu.org/licenses/>.
 ################################################################################
 
-set(repo nextgis-borsch/lib_z)
+set(repo nextgis-borsch/lib_gif)
 set(repo_type github)
 # set(repo_branch master) # No need to set as master is default value
+# set(repo_bin_url https://api.github.com)
 
 # Set for binary artifacts
-set(repo_bin lib_z)
+set(repo_bin lib_gif)
 set(repo_bin_type repka)
 set(repo_bin_url https://rm.nextgis.com)
 set(repo_bin_id 2) # additional parameter. Not needed for github
