@@ -123,7 +123,7 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/project_lib)
 if(WIN32)
     find_anyproject(ZLIB DEFAULT ON)
     if(ZLIB_FOUND)
-        add_dependency(${ZLIB_INCLUDE_DIRS} ${ZLIB_LIBRARIES} -system-zlib ZLIB)
+        add_dependency(ZLIB -system-zlib ${ZLIB_INCLUDE_DIRS} ${ZLIB_LIBRARIES})
     endif()
 endif()
 
@@ -142,7 +142,7 @@ if(NOT APPLE)
     if(HARFBUZZ_FOUND)
         add_dependency(HARFBUZZ -system-harfbuzz ${HARFBUZZ_INCLUDE_DIRS} ${HARFBUZZ_LIBRARIES})
         # file(MAKE_DIRECTORY ${HARFBUZZ_INCLUDE_DIRS}/harfbuzz)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${HARFBUZZ_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS}/harfbuzz)
+        #execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${HARFBUZZ_INCLUDE_DIRS} ${HARFBUZZ_INCLUDE_DIRS}/harfbuzz)
     endif()
 endif()
 
@@ -221,6 +221,11 @@ endif()
 set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
 set(OUT_NAME "qt.tar.xz")
 
+message(STATUS "Configure args: ${CONFIGURE_ARGS}")
+status_message("Configure in ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}")
+
+message(FATAL_ERROR "qqqq")
+
 if(NOT EXISTS "${ARCH_OUT_DIR}/${OUT_NAME}")
     status_message("Download ${DOWNLOAD_URL}")
     file(DOWNLOAD "${DOWNLOAD_URL}" "${ARCH_OUT_DIR}/${OUT_NAME}"
@@ -267,24 +272,6 @@ if(NOT GIT_FOUND)
   message(FATAL_ERROR "git is required")
 endif()
 
-# if(APPLE)
-#     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/xcode91.patch")
-#     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v  ${CMAKE_CURRENT_SOURCE_DIR}/patch/xcode91.patch
-#         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-#         OUTPUT_QUIET ERROR_QUIET
-#     )
-#     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac2.patch")
-#     execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac2.patch
-#         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-#         OUTPUT_QUIET ERROR_QUIET
-#     )
-# endif()
-# status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch")
-# execute_process(COMMAND ${GIT_EXECUTABLE} apply --ignore-whitespace -v ${CMAKE_CURRENT_SOURCE_DIR}/patch/mac3.patch
-#     WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-#     OUTPUT_QUIET ERROR_QUIET
-# )
-
 if(OPENSSL_FOUND AND OPENSSL_VERSION VERSION_GREATER "1.0.2" AND QT_MINOR_VERSION LESS 10)
     # Apply patch for 1.1
     status_message("Apply patch ${CMAKE_CURRENT_SOURCE_DIR}/patch/openssl11.patch")
@@ -295,10 +282,6 @@ if(OPENSSL_FOUND AND OPENSSL_VERSION VERSION_GREATER "1.0.2" AND QT_MINOR_VERSIO
 endif()
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/inst)
-
-message(STATUS "Configure args: ${CONFIGURE_ARGS}")
-status_message("Configure in ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}")
-
 
 if(WIN32)
     get_filename_component(VC_COMPILER_DIR ${CMAKE_CXX_COMPILER} DIRECTORY)
