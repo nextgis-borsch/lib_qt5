@@ -224,8 +224,6 @@ set(OUT_NAME "qt.tar.xz")
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
 status_message("Configure in ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}")
 
-message(FATAL_ERROR "qqqq")
-
 if(NOT EXISTS "${ARCH_OUT_DIR}/${OUT_NAME}")
     status_message("Download ${DOWNLOAD_URL}")
     file(DOWNLOAD "${DOWNLOAD_URL}" "${ARCH_OUT_DIR}/${OUT_NAME}"
