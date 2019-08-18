@@ -246,19 +246,19 @@ endif()
 
 # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
 if(WIN32 AND ZLIB_FOUND)
-    warning_message("Copy ${ZIP_LIB_PATH} to ${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin")
+    warning_message("Copy ${ZLIB_LIB_PATH} to ${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E make_directory "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZIP_LIB_PATH} "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin\\zlib1.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_LIB_PATH} "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin\\zlib1.dll"
     )
     if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/qtbase/bin/zlib1.dll)
         message(FATAL_ERROR "${ARCH_OUT_DIR}\\${QT_INPUT_NAME_NEW}\\qtbase\\bin\\zlib1.dll not exists!")
     endif()
 
-    warning_message("Copy ${ZIP_LIB_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\")
+    warning_message("Copy ${ZLIB_LIB_PATH} to $ENV{USERPROFILE}\\source\\qtbase\\bin\\")
     execute_process(
         COMMAND ${CMAKE_COMMAND} -E make_directory "$ENV{USERPROFILE}\\source" "$ENV{USERPROFILE}\\source\\qtbase" "$ENV{USERPROFILE}\\source\\qtbase\\bin"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZIP_LIB_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZLIB_LIB_PATH} "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll"
     )
     if(NOT EXISTS $ENV{USERPROFILE}/source/qtbase/bin/zlib1.dll)
         message(FATAL_ERROR "$ENV{USERPROFILE}\\source\\qtbase\\bin\\zlib1.dll not exists!")
