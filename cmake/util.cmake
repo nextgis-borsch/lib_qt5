@@ -123,6 +123,9 @@ macro(add_dependency PREFIX ARGS DEPENDENCY_INCLUDE_DIRS DEPENDENCY_LIBRARIES)
             get_target_property(LINK_L_PATH ${DEPENDENCY_LIBRARY} IMPORTED_IMPLIB_RELEASE)
             get_filename_component(LINK_NAME ${LINK_L_PATH} NAME_WE)
             get_filename_component(LINK_LIBS_DIR ${LINK_L_PATH} PATH)
+
+            message("LINK_L_PATH ${LINK_L_PATH}; LINK_NAME ${LINK_NAME}; LINK_LIBS_DIR ${LINK_LIBS_DIR}")
+
             set(CONFIGURE_ARGS_LINK_LIBS ${CONFIGURE_ARGS_LINK_LIBS} ${LINK_LIBS_DIR})
             
             message("Check ${LINK_LIBS_DIR}/${LINK_NAME}.lib")
