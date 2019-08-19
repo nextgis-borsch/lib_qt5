@@ -104,7 +104,7 @@ function(get_binary_package url repo repo_type repo_id exact_version is_static d
             string(FIND ${api_request.files_${asset_id}.name} "${STATIC_PREFIX}${COMPILER}.zip" IS_FOUND)
             # In this case we get static and shared. Add one more check.
             if(NOT is_static)
-                string(FIND ${api_request.assets_${asset_id}.browser_download_url} "static-${COMPILER}.zip" IS_FOUND)
+                string(FIND ${api_request.files_${asset_id}.name} "static-${COMPILER}.zip" IS_FOUND)
                 if(IS_FOUND GREATER 0)
                     continue()
                 endif()
