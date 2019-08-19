@@ -57,6 +57,7 @@ function(get_binary_package url repo repo_type repo_id exact_version is_static d
         include(JSONParser)
         sbeParseJson(api_request _JSON_CONTENTS)
         foreach(asset_id ${api_request.assets})
+            color_message("url: ${api_request.assets_${asset_id}.browser_download_url}")
             if(exact_version)
                 string(FIND ${api_request.assets_${asset_id}.browser_download_url} "${exact_version}-${STATIC_PREFIX}${COMPILER}.zip" IS_FOUND)
             else()
