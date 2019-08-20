@@ -353,6 +353,8 @@ add_custom_target(preinstall_qt ALL
     COMMAND ${MAKE_CMD}
     DEPENDS build_qt
     WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+    COMMENT "${MAKE_CMD}"
+    VERBATIM
 )
 
 if(OSX_FRAMEWORK)
