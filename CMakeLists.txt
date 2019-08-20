@@ -65,9 +65,9 @@ elseif(BUILD_SHARED_LIBS)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -shared)
 else()
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -static)
-    if(WIN32)
-        set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -static-runtime)
-    endif()
+    # if(WIN32)   # Switch /MD to /MT
+    #     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -static-runtime)
+    # endif()
 endif()
 
 if(WIN32)

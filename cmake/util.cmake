@@ -142,6 +142,7 @@ macro(add_dependency PREFIX ARGS DEPENDENCY_INCLUDE_DIRS DEPENDENCY_LIBRARIES)
             endif()
         endif()
     endforeach()  
+    # Special case for qt static build with openssl
     if(${PREFIX} STREQUAL OPENSSL AND BUILD_STATIC_LIBS)
         set(_LIBS "${_LIBS}-lcrypt32 -lws2_32 -ladvapi32 -luser32") 
     endif()  
