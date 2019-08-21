@@ -126,7 +126,7 @@ macro(add_dependency PREFIX ARGS DEPENDENCY_INCLUDE_DIRS DEPENDENCY_LIBRARIES)
             if(BUILD_STATIC_LIBS)
                 set(LINK_L_PATH ${LINK_SEARCH_PATH})
             else()
-                get_target_property(LINK_L_PATH ${OPENSSL_LIBRARIES} IMPORTED_IMPLIB_RELEASE)
+                get_target_property(LINK_L_PATH ${DEPENDENCY_LIBRARY} IMPORTED_IMPLIB_RELEASE)
             endif()
 
             get_filename_component(LINK_NAME ${LINK_L_PATH} NAME_WE)
