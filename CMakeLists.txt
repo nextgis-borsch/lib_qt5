@@ -252,6 +252,11 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
     )
     status_message("Extract finished ...")
     file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+
+    if(NOT SKIP_CLEAN_DOWNLOADS)
+        status_message("Remove ${ARCH_OUT_DIR}/${OUT_NAME}")
+        file(REMOVE ${ARCH_OUT_DIR}/${OUT_NAME})
+    endif()
 endif()
 
 # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
