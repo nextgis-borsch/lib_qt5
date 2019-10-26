@@ -185,6 +185,11 @@ if(SQLITE3_FOUND)
     add_dependency(SQLITE "-system-sqlite;-sql-sqlite" "${SQLITE3_INCLUDE_DIRS}" "${SQLITE3_LIBRARIES}")
 endif()
 
+# Add ODBC on Windows
+if(WIN32)
+    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -sql-odbc)
+endif()
+
 find_anyproject(PostgreSQL DEFAULT ON NAMES PQ pq libpq)
 if(POSTGRESQL_FOUND)
     add_dependency(PSQL -sql-psql "${POSTGRESQL_INCLUDE_DIRS}" "${POSTGRESQL_LIBRARIES}")
