@@ -229,7 +229,11 @@ else()
     set(ARCH_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
-set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
+# set(DOWNLOAD_URL "http://download.qt.io/official_releases/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
+# http://mirrors.sohu.com/qt-all/archive/qt/5.13/5.13.1/single/qt-everywhere-src-5.13.1.tar.xz
+# set(DOWNLOAD_URL "http://mirrors.sohu.com/qt-all/archive/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
+# https://ftp.osuosl.org/pub/blfs/conglomeration/qt5/
+set(DOWNLOAD_URL "https://ftp.osuosl.org/pub/blfs/conglomeration/qt5/${QT_INPUT_NAME}.tar.xz")
 set(OUT_NAME "qt.tar.xz")
 
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
