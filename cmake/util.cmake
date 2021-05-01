@@ -28,8 +28,8 @@ function(check_version major minor rev)
 
     set(CHECK_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
     set(MAJOR_VERSION 5)
-    set(MINOR_VERSION 13)
-    set(REV_VERSION 1)
+    set(MINOR_VERSION 15)
+    set(REV_VERSION 2)
 
     set(${major} ${MAJOR_VERSION} PARENT_SCOPE)
     set(${minor} ${MINOR_VERSION} PARENT_SCOPE)
