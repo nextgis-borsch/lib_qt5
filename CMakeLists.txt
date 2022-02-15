@@ -309,14 +309,10 @@ if(WIN32)
         PATH_SUFFIXES "Common7/Tools" "Tools"
     )
 
-    if(DEFINED CMAKE_GENERATOR)
-        # TODO: Need different arguments for vsdevcmd.bat and vcvarsall.bat. Now support only VC2017
-        string(FIND ${CMAKE_GENERATOR} "Win64" POS)
-        if(POS GREATER -1)
-            set(VCVARSALL_BAT_ARG -arch=amd64)
-        else()
-            set(VCVARSALL_BAT_ARG -arch=x86)
-        endif()
+    if("${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)" OR "${CMAKE_GENERATOR_PLATFORM}" MATCHES "x64")
+        set(VCVARSALL_BAT_ARG -arch=amd64)
+    else()
+        set(VCVARSALL_BAT_ARG -arch=x86)
     endif()
 
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
