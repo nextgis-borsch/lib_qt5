@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 ################################################################################
 ##
@@ -11,21 +11,19 @@
 ################################################################################
 
 import os
-import shutil
 import string
 import subprocess
 import sys
-import multiprocessing
 import glob
 
 install_dir = 'inst'
 
 def run(args):
-    print 'calling ' + string.join(args)
+    print('calling ' + string.join(args))
     try:
         subprocess.check_call(args)
         return True
-    except subprocess.CalledProcessError, e:
+    except:
         return False
 
 if sys.platform != 'darwin':

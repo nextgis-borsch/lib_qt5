@@ -216,7 +216,10 @@ endif()
 # http://download.qt.io/official_releases/qt/5.10/5.10.0/single/qt-everywhere-src-5.10.0.tar.xz
 # http://download.qt.io/official_releases/qt/5.9/5.9.4/single/qt-everywhere-opensource-src-5.9.4.tar.xz
 
-if(VERSION VERSION_LESS "5.10.0")
+# qt-everywhere-opensource-src-5.9.3.tar.xz
+# qt-everywhere-src-5.10.0.tar.xz
+# qt-everywhere-opensource-src-5.15.11.tar.xz
+if(VERSION VERSION_LESS "5.10.0" OR VERSION VERSION_GREATER "5.15.2")
     set(QT_INPUT_NAME "qt-everywhere-opensource-src-${VERSION}")
 else()
     set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
