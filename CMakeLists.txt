@@ -224,6 +224,7 @@ if(VERSION VERSION_LESS "5.10.0" OR VERSION VERSION_GREATER "5.15.2")
 else()
     set(QT_INPUT_NAME "qt-everywhere-src-${VERSION}")
 endif()
+set(QT_PATH_NAME "qt-everywhere-src-${VERSION}")
 
 if(WIN32)
     set(ARCH_OUT_DIR "C:/tmp")
@@ -259,7 +260,7 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
         WORKING_DIRECTORY ${ARCH_OUT_DIR}
     )
     status_message("Extract finished ...")
-    file(RENAME ${ARCH_OUT_DIR}/${QT_INPUT_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+    file(RENAME ${ARCH_OUT_DIR}/${QT_PATH_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
 
     if(NOT SKIP_CLEAN_DOWNLOADS)
         status_message("Remove ${ARCH_OUT_DIR}/${OUT_NAME}")
