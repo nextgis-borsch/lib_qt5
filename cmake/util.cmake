@@ -127,6 +127,11 @@ macro(add_dependency PREFIX ARGS DEPENDENCY_INCLUDE_DIRS DEPENDENCY_LIBRARIES)
                 set(LINK_L_PATH ${LINK_SEARCH_PATH})
             else()
                 get_target_property(LINK_L_PATH ${DEPENDENCY_LIBRARY} IMPORTED_IMPLIB_RELEASE)
+                # Some imported targets (e.g. static OpenSSL from package managers)
+                # expose only IMPORTED_LOCATION_RELEASE on Windows.
+                if(NOT LINK_L_PATH OR LINK_L_PATH MATCHES "-NOTFOUND$")
+                    get_target_property(LINK_L_PATH ${DEPENDENCY_LIBRARY} IMPORTED_LOCATION_RELEASE)
+                endif()
             endif()
 
             get_filename_component(LINK_NAME ${LINK_L_PATH} NAME_WE)

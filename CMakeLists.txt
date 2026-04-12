@@ -130,11 +130,24 @@ if(WIN32)
     endif()
 endif()
 
-if(OSX_FRAMEWORK OR WIN32)
+option(QT_USE_OPENSSL_LINKED "Use OpenSSL-linked Qt TLS backend" ON)
+
+if(OSX_FRAMEWORK OR (WIN32 AND QT_USE_OPENSSL_LINKED))
     find_anyproject(OpenSSL DEFAULT ON)
     if(OPENSSL_FOUND)
         add_dependency(OPENSSL -openssl-linked "${OPENSSL_INCLUDE_DIRS}" "${OPENSSL_LIBRARIES}")
+        if(WIN32)
+            # -openssl-linked requires schannel to be disabled in Qt feature checks.
+            list(REMOVE_ITEM CONFIGURE_ARGS -schannel)
+            set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -no-schannel)
+        endif()
+    elseif(WIN32)
+        message(FATAL_ERROR "QT_USE_OPENSSL_LINKED is ON, but OpenSSL was not found")
     endif()
+endif()
+
+if(WIN32 AND NOT QT_USE_OPENSSL_LINKED)
+    set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -schannel)
 endif()
 
 find_anyproject(Freetype DEFAULT ON)
@@ -253,6 +266,21 @@ endif()
 
 # Make path shorter: https://forum.qt.io/topic/86079/qtwebengine-build-failed-on-gn-bootstrap-py/4
 set(QT_INPUT_NAME_NEW q)
+set(QT_SOURCE_VERSION_FILE "${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/.qt_source_version")
+if(EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+    if(EXISTS ${QT_SOURCE_VERSION_FILE})
+        file(READ ${QT_SOURCE_VERSION_FILE} QT_SOURCE_VERSION)
+        string(STRIP "${QT_SOURCE_VERSION}" QT_SOURCE_VERSION)
+        if(NOT "${QT_SOURCE_VERSION}" STREQUAL "${VERSION}")
+            status_message("Qt source version changed: ${QT_SOURCE_VERSION} -> ${VERSION}. Recreate source tree.")
+            file(REMOVE_RECURSE ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+        endif()
+    else()
+        status_message("Qt source version marker is missing. Recreate source tree.")
+        file(REMOVE_RECURSE ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+    endif()
+endif()
+
 if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
     status_message("Extract ${ARCH_OUT_DIR}/${OUT_NAME}")
     execute_process(
@@ -260,13 +288,26 @@ if(NOT EXISTS ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
         WORKING_DIRECTORY ${ARCH_OUT_DIR}
     )
     status_message("Extract finished ...")
-    file(RENAME ${ARCH_OUT_DIR}/${QT_PATH_NAME} ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW})
+    set(QT_EXTRACTED_DIR "${ARCH_OUT_DIR}/${QT_INPUT_NAME}")
+    if(NOT EXISTS "${QT_EXTRACTED_DIR}")
+        set(QT_EXTRACTED_DIR_ALT "${ARCH_OUT_DIR}/${QT_PATH_NAME}")
+        if(EXISTS "${QT_EXTRACTED_DIR_ALT}")
+            set(QT_EXTRACTED_DIR "${QT_EXTRACTED_DIR_ALT}")
+        else()
+            message(FATAL_ERROR
+                "Qt source directory was not found after extraction. Tried: "
+                "${ARCH_OUT_DIR}/${QT_INPUT_NAME} and ${ARCH_OUT_DIR}/${QT_PATH_NAME}"
+            )
+        endif()
+    endif()
+    file(RENAME "${QT_EXTRACTED_DIR}" "${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}")
 
     if(NOT SKIP_CLEAN_DOWNLOADS)
         status_message("Remove ${ARCH_OUT_DIR}/${OUT_NAME}")
         file(REMOVE ${ARCH_OUT_DIR}/${OUT_NAME})
     endif()
 endif()
+file(WRITE ${QT_SOURCE_VERSION_FILE} "${VERSION}\n")
 
 # Copy zlib1.dll to make  moc.exe, rcc.exe, etc. working
 if(WIN32 AND ZLIB_FOUND)
@@ -320,18 +361,47 @@ if(WIN32)
     endif()
 
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
+    set(CONFIGURE_ARGS_STR "")
+    foreach(CONFIGURE_ARG ${CONFIGURE_ARGS})
+        if(CONFIGURE_ARG MATCHES "_LIBS=")
+            string(APPEND CONFIGURE_ARGS_STR " \"${CONFIGURE_ARG}\"")
+        else()
+            string(APPEND CONFIGURE_ARGS_STR " ${CONFIGURE_ARG}")
+        endif()
+    endforeach()
+    string(STRIP "${CONFIGURE_ARGS_STR}" CONFIGURE_ARGS_STR)
 
-    set(CONFIGURE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME} ${CONFIGURE_ARGS})
+    set(QT_CONFIGURE_CMD_FILE "${CMAKE_CURRENT_BINARY_DIR}/qt_configure.cmd")
+    file(WRITE "${QT_CONFIGURE_CMD_FILE}"
+        "@echo off\n"
+        "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
+        "if errorlevel 1 exit /b %errorlevel%\n"
+        "call \"${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME}\" ${CONFIGURE_ARGS_STR} -prefix \"${CMAKE_INSTALL_PREFIX}\"\n"
+        "exit /b %errorlevel%\n"
+    )
 
     execute_process(
-        COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
+        COMMAND cmd /c "${QT_CONFIGURE_CMD_FILE}"
         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+        RESULT_VARIABLE CONFIGURE_RESULT_CODE
+    )
+    if(NOT CONFIGURE_RESULT_CODE EQUAL 0)
+        message(FATAL_ERROR "Qt configure failed with exit code ${CONFIGURE_RESULT_CODE}.")
+    endif()
+
+    set(QT_BUILD_CMD_FILE "${CMAKE_CURRENT_BINARY_DIR}/qt_build.cmd")
+    file(WRITE "${QT_BUILD_CMD_FILE}"
+        "@echo off\n"
+        "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
+        "if errorlevel 1 exit /b %errorlevel%\n"
+        "nmake\n"
+        "exit /b %errorlevel%\n"
     )
 
     add_custom_target(build_qt ALL
-        COMMAND ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake
+        COMMAND cmd /c "${QT_BUILD_CMD_FILE}"
         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
-        COMMENT "${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake"
+        COMMENT "cmd /c ${QT_BUILD_CMD_FILE}"
         VERBATIM
     )
 else()
@@ -340,7 +410,11 @@ else()
     execute_process(
         COMMAND ${CONFIGURE_CMD} -prefix ${CMAKE_INSTALL_PREFIX}
         WORKING_DIRECTORY ${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}
+        RESULT_VARIABLE CONFIGURE_RESULT_CODE
     )
+    if(NOT CONFIGURE_RESULT_CODE EQUAL 0)
+        message(FATAL_ERROR "Qt configure failed with exit code ${CONFIGURE_RESULT_CODE}.")
+    endif()
 
     add_custom_target(build_qt ALL
         COMMAND make -j ${CPU_COUNT}
@@ -354,7 +428,15 @@ endif()
 get_cpack_filename(${VERSION} PROJECT_CPACK_FILENAME)
 
 if(WIN32)
-    set(MAKE_CMD ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG} && nmake install)
+    set(QT_INSTALL_CMD_FILE "${CMAKE_CURRENT_BINARY_DIR}/qt_install.cmd")
+    file(WRITE "${QT_INSTALL_CMD_FILE}"
+        "@echo off\n"
+        "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
+        "if errorlevel 1 exit /b %errorlevel%\n"
+        "nmake install\n"
+        "exit /b %errorlevel%\n"
+    )
+    set(MAKE_CMD cmd /c "${QT_INSTALL_CMD_FILE}")
 else()
     set(MAKE_CMD make install)
 endif()
