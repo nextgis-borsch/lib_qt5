@@ -58,6 +58,7 @@ report_version(${PROJECT_NAME} ${VERSION})
 
 set(SUBFOLDER "single/")
 set(CONFIGURE_ARGS -opensource -confirm-license -nomake examples -nomake tests -silent ${QT_CONFIGURE_ARGS})
+set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -skip qtwebengine)
 
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
@@ -250,7 +251,8 @@ endif()
 # http://mirrors.sohu.com/qt-all/archive/qt/5.13/5.13.1/single/qt-everywhere-src-5.13.1.tar.xz
 # set(DOWNLOAD_URL "http://mirrors.sohu.com/qt-all/archive/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/${SUBFOLDER}${QT_INPUT_NAME}.tar.xz")
 # https://ftp.osuosl.org/pub/blfs/conglomeration/qt5/
-set(DOWNLOAD_URL "https://ftp.osuosl.org/pub/blfs/conglomeration/qt5/${QT_INPUT_NAME}.tar.xz")
+#set(DOWNLOAD_URL "https://ftp.osuosl.org/pub/blfs/conglomeration/qt5/${QT_INPUT_NAME}.tar.xz")
+set(DOWNLOAD_URL "https://download.qt.io/archive/qt/${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}/${VERSION}/single/${QT_INPUT_NAME}.tar.xz")
 set(OUT_NAME "qt.tar.xz")
 
 message(STATUS "Configure args: ${CONFIGURE_ARGS}")
