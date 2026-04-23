@@ -51,6 +51,8 @@ set(INSTALL_CMAKECONF_DIR CMake CACHE INTERNAL "Installation directory for cmake
 set(PACKAGE_NAME ${PROJECT_NAME})
 string(TOUPPER ${PACKAGE_NAME} PACKAGE_UPPER_NAME)
 
+option(QT_USE_PYTHON2 "Use Python 2.7 for Qt/Chromium tooling instead of Python 3" ON)
+
 include(util)
 check_version(QT_MAJOR_VERSION QT_MINOR_VERSION QT_REV_VERSION)
 set(VERSION "${QT_MAJOR_VERSION}.${QT_MINOR_VERSION}.${QT_REV_VERSION}")
@@ -58,7 +60,6 @@ report_version(${PROJECT_NAME} ${VERSION})
 
 set(SUBFOLDER "single/")
 set(CONFIGURE_ARGS -opensource -confirm-license -nomake examples -nomake tests -silent ${QT_CONFIGURE_ARGS})
-set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -skip qtwebengine)
 
 if(OSX_FRAMEWORK)
     set(CONFIGURE_ARGS ${CONFIGURE_ARGS} -framework -no-rpath)
@@ -362,6 +363,57 @@ if(WIN32)
         set(VCVARSALL_BAT_ARG -arch=x86)
     endif()
 
+    if(DEFINED QT_BUILD_PYTHON AND EXISTS "${QT_BUILD_PYTHON}")
+        set(QT_PYTHON_EXECUTABLE "${QT_BUILD_PYTHON}")
+    elseif(QT_USE_PYTHON2)
+        find_program(QT_PYTHON_EXECUTABLE NAMES python2 python2.7 python2.exe py2
+            PATHS "C:/Python27" "C:/Python27-32"
+            DOC "Python 2.7 for Qt/Chromium build scripts (QT_USE_PYTHON2)")
+        if(NOT QT_PYTHON_EXECUTABLE)
+            message(FATAL_ERROR "QT_USE_PYTHON2 is ON but Python 2.7 was not found. Install Python 2.7 (e.g. C:/Python27), add to PATH, or set -DQT_BUILD_PYTHON=C:/Python27/python.exe. Or set -DQT_USE_PYTHON2=OFF to use Python 3.")
+        endif()
+        message(WARNING "QT_USE_PYTHON2: qtdeclarative Yarr scripts may require Python 3 on some Qt versions; if configure or Qt5Qml link fails, set QT_USE_PYTHON2=OFF and use Python 3 with WebEngine patches.")
+    else()
+        find_program(QT_PYTHON_EXECUTABLE NAMES python python3 py
+            DOC "Python 3 for Qt qtdeclarative Yarr codegen (RegExpJitTables.h)")
+        if(NOT QT_PYTHON_EXECUTABLE)
+            message(FATAL_ERROR "Python 3 not found. QtQml requires Python to generate RegExpJitTables.h. Install Python 3, add it to PATH, or set -DQT_BUILD_PYTHON=C:/path/to/python.exe. For experimental Python 2.7 instead, set -DQT_USE_PYTHON2=ON.")
+        endif()
+    endif()
+    get_filename_component(QT_PYTHON_EXE_DIR ${QT_PYTHON_EXECUTABLE} DIRECTORY)
+    file(TO_NATIVE_PATH "${QT_PYTHON_EXE_DIR}" QT_PYTHON_EXE_DIR_NATIVE)
+    set(QT_PYTHON_SCRIPTS_DIR "${QT_PYTHON_EXE_DIR}/Scripts")
+    file(TO_NATIVE_PATH "${QT_PYTHON_SCRIPTS_DIR}" QT_PYTHON_SCRIPTS_DIR_NATIVE)
+    set(QT_PYTHON_PATH_CMD "set \"PATH=${QT_PYTHON_EXE_DIR_NATIVE};${QT_PYTHON_SCRIPTS_DIR_NATIVE};%PATH%\"\n")
+    message(STATUS "Qt build Python: ${QT_PYTHON_EXECUTABLE}")
+
+    # Qt WebEngine: configure requires Node.js
+    if(DEFINED QT_BUILD_NODE AND EXISTS "${QT_BUILD_NODE}")
+        set(QT_NODE_EXECUTABLE "${QT_BUILD_NODE}")
+    else()
+        find_program(QT_NODE_EXECUTABLE NAMES node node.exe
+            DOC "Node.js for Qt WebEngine")
+    endif()
+    set(QT_TOOL_PATH_CMD "${QT_PYTHON_PATH_CMD}")
+    if(QT_NODE_EXECUTABLE)
+        get_filename_component(QT_NODE_EXE_DIR ${QT_NODE_EXECUTABLE} DIRECTORY)
+        file(TO_NATIVE_PATH "${QT_NODE_EXE_DIR}" QT_NODE_EXE_DIR_NATIVE)
+        string(APPEND QT_TOOL_PATH_CMD "set \"PATH=${QT_NODE_EXE_DIR_NATIVE};%PATH%\"\n")
+        message(STATUS "Qt build Node.js: ${QT_NODE_EXECUTABLE}")
+    else()
+        message(WARNING "Node.js not found. Qt WebEngine will not be built. Install Node.js LTS (https://nodejs.org/) and add to PATH, or set -DQT_BUILD_NODE=C:/path/to/node.exe")
+    endif()
+
+    # Chromium devtools-frontend TypeScript (ninja) often needs a larger JS heap than Node defaults.
+    if(DEFINED QT_NODE_OPTIONS)
+        string(APPEND QT_TOOL_PATH_CMD "set \"NODE_OPTIONS=${QT_NODE_OPTIONS}\"\n")
+    else()
+        string(APPEND QT_TOOL_PATH_CMD "set \"NODE_OPTIONS=--max-old-space-size=8192\"\n")
+    endif()
+
+    # Chromium tool_wrapper.py: avoid UnicodeEncodeError when printing MSVC link output on cp1251 consoles.
+    string(APPEND QT_TOOL_PATH_CMD "set \"PYTHONIOENCODING=utf-8\"\n")
+
     message(STATUS "VCVARSALL_BAT: ${VCVARSALL_BAT} ${VCVARSALL_BAT_ARG}")
     set(CONFIGURE_ARGS_STR "")
     foreach(CONFIGURE_ARG ${CONFIGURE_ARGS})
@@ -378,6 +430,7 @@ if(WIN32)
         "@echo off\n"
         "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
         "if errorlevel 1 exit /b %errorlevel%\n"
+        "${QT_TOOL_PATH_CMD}"
         "call \"${ARCH_OUT_DIR}/${QT_INPUT_NAME_NEW}/${CONFIGURE_CMD_NAME}\" ${CONFIGURE_ARGS_STR} -prefix \"${CMAKE_INSTALL_PREFIX}\"\n"
         "exit /b %errorlevel%\n"
     )
@@ -396,6 +449,7 @@ if(WIN32)
         "@echo off\n"
         "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
         "if errorlevel 1 exit /b %errorlevel%\n"
+        "${QT_TOOL_PATH_CMD}"
         "nmake\n"
         "exit /b %errorlevel%\n"
     )
@@ -435,6 +489,7 @@ if(WIN32)
         "@echo off\n"
         "call \"${VCVARSALL_BAT}\" ${VCVARSALL_BAT_ARG}\n"
         "if errorlevel 1 exit /b %errorlevel%\n"
+        "${QT_TOOL_PATH_CMD}"
         "nmake install\n"
         "exit /b %errorlevel%\n"
     )
